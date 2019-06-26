@@ -1,30 +1,50 @@
 var flowChartKit = {}
 
-
 /**
  * 初始化
  * @method init
  * @for flowChartKit
  * @param {jsPlumb} jsPlumbIns jsPlumb的实例
  */
-flowChartKit.init = function (jsPlumbIns, ) {
-    var canvas = jsPlumbIns.Defaults.Container;
-    canvas = document.getElementById(canvas)
-    // delete group button
-    jsPlumb.on(canvas, "click", ".del", function () {
-        var node = this.parentNode.getAttribute("jpNode");
-        // jsPlumbIns.removeGroup(node, this.getAttribute("delete-all") != null);
-        // jsPlumbIns.deleteConnectionsForElement(node)
-        if (node != null) {
-            flowChartKit.delNode(jsPlumbIns, node);
-        }
+flowChartKit.init = function (container, onClickNode, onClickConnection) {
+    var color = "#E8C870";
+    var jsPlumbIns = jsPlumb.getInstance({
+        Endpoint: ["Dot", { radius: 5 }],
+        EndpointStyle: { fill: "#ffa500" },
+        Connector: "StateMachine",
+        HoverPaintStyle: { stroke: "#1e8151", strokeWidth: 2 },
+        ConnectionOverlays: [
+            ["Arrow", {
+                location: 1,
+                id: "arrow",
+                length: 14,
+                foldback: 0.8
+            }],
+            ["Label", {
+                location: 0.2,
+                label: "x", id: "label",
+                cssClass: "aLabel"
+            }]
+        ],
+        Container: container
     });
+
+    var canvas = jsPlumbIns.Defaults.Container;
+    canvas = document.getElementById(canvas);
+
+    // jsPlumbIns.importDefaults({
+    //     Connector: ["Bezier", { curviness: 150 }],
+    //     Anchors: ["TopCenter", "BottomCenter"]
+    // });
 
     // bind a click listener to each connection; the connection is deleted. you could of course
     // just do this: instance.bind("click", instance.deleteConnection), but I wanted to make it clear what was
     // happening.
     jsPlumbIns.bind("click", function (c) {
-        jsPlumbIns.deleteConnection(c);
+        // jsPlumbIns.deleteConnection(c);
+        if (onClickConnection != null) {
+            onClickConnection(c)
+        }
     });
 
     // bind a connection listener. note that the parameter passed to this function contains more than
@@ -32,7 +52,7 @@ flowChartKit.init = function (jsPlumbIns, ) {
     // this listener sets the connection's internal
     // id as the label overlay's text.
     jsPlumbIns.bind("connection", function (info) {
-        // info.connection.getOverlay("label").setLabel(info.connection.id);
+        info.connection.getOverlay("label").setLabel("");
         console.log("connection==" + info.connection.id);
         console.log("source==" + info.connection.source.id)
         console.log("target==" + info.connection.target.id)
@@ -47,10 +67,22 @@ flowChartKit.init = function (jsPlumbIns, ) {
         // info.connection.getOverlay("label").setLabel(info.connection.id);
         console.log("connectionMoved==" + info.connection.id);
     });
+
+    // delete group button
+    jsPlumb.on(canvas, "click", ".del", function () {
+        var node = this.parentNode.getAttribute("jpNode");
+        // jsPlumbIns.removeGroup(node, this.getAttribute("delete-all") != null);
+        // jsPlumbIns.deleteConnectionsForElement(node)
+        if (node != null) {
+            flowChartKit.delNode(jsPlumbIns, node);
+        }
+    });
+
     // bind a double click listener to "canvas"; add new node when this occurs.
     jsPlumb.on(canvas, "dblclick", function (e) {
         flowChartKit.newNode(jsPlumbIns, null, e.offsetX, e.offsetY, "New Node");
     });
+    return jsPlumbIns;
 }
 
 /**
@@ -69,14 +101,39 @@ flowChartKit.newNode = function (jsPlumbIns, id, x, y, name) {
     if (id == null) {
         id = jsPlumbUtil.uuid();
     }
+    var delBtnID = "del_" + id
     d.className = "w";
     d.id = id;
     d.setAttribute("jpNode", id)
-    d.innerHTML = "<div class=\"del\" delete-all></div>" + name + "<div class=\"ep\"></div>";
+    d.innerHTML = "<div class=\"del\" delete-all id=\"" + delBtnID + "\"></div>" + name + "<div class=\"ep\"></div>";
     d.style.left = x + "px";
     d.style.top = y + "px";
     jsPlumbIns.getContainer().appendChild(d);
-    flowChartKit.initNode(jsPlumbIns, d, 1, 1, false);
+
+    $('#' + id).on('mouseover', function (ev) {
+        $('#' + delBtnID).show()
+    });
+
+    $('#' + id).on('mouseout', function (ev) {
+        $('#' + delBtnID).hide()
+    });
+
+    $('#' + id).on('mousedown', function (ev) {
+        $('#' + id).off('mouseover');
+        $('#' + id).on('mousemove', function (ev) {
+            console.log("mousemove")
+            $('#' + delBtnID).hide()
+        });
+    });
+
+    $('#' + id).on('mouseup', function (ev) {
+        $('#' + id).off('mousemove');
+        $('#' + id).on('mouseover', function (ev) {
+            $('#' + delBtnID).show()
+        });
+    });
+
+    flowChartKit.initNode(jsPlumbIns, d, -1, -1, false);
     return d;
 }
 
