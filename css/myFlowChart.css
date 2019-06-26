@@ -1,0 +1,225 @@
+
+.group-container {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 12px;
+    background-color: WhiteSmoke;
+    font-size: 12px;
+    cursor:move;
+}
+
+.group-container ul {
+    margin-left:25px;
+    padding: 0;
+}
+
+.group-container ul li {
+    list-style-type:circle;
+    margin-bottom: 7px;
+}
+
+.large {
+    width:600px;
+    height:600px;
+}
+
+.group-container.collapsed {
+    height:40px;
+}
+
+.title {
+    background-color:#ABC1BB;
+    padding-right:16px;
+    font-size:13px;
+    height:30px;
+}
+
+#container1 { left:20px;top:50px; }
+#container2 { left:250px;top:50px; }
+#container3 { left:480px;top:50px; }
+#container4 { left:710px;top:50px; }
+#container5 { left:600px;top:340px; }
+#container6 { left:370px;top:340px; }
+#container7 { left:140px;top:340px; }
+
+.del, .node-collapse {
+    position:absolute;
+    top:3px;
+    left:3px;
+    background-color:white;
+    padding:1px;
+    cursor:pointer;
+    font-size:13px;
+    width:20px;
+    height:20px;
+    border-radius: 50%;
+    text-align:center;
+    display:block;
+}
+
+.del:after {
+    content:"X";
+}
+
+.node-collapse {
+    right:29px;
+    text-align: center;
+}
+
+.node-collapse:after {
+    content:"-";
+}
+
+.group-container.collapsed .node-collapse:after {
+    content:"+";
+}
+
+.del[delete-all] {
+    background-color: pink;
+}
+
+.jtk-connector path {
+    stroke-width:1;
+}
+
+.jtk-group-collapsed .w, .jtk-group-collapsed ul, .jtk-group-collapsed .container, .jtk-group-collapsed .name {
+    display:none;
+}
+
+.jtk-drag-hover {
+    outline:4px solid cornflowerblue;
+}
+
+.katavorio-ghost-proxy {
+    outline:2px solid red;
+}
+
+.events {
+    position:absolute;
+    right:0;
+    top:0;
+    border-left:4px solid #58775d;
+    bottom:0;
+    width:156px;
+    font-size: 11px;
+    padding-left:11px;
+    background-color: white;
+}
+
+#events {
+    position: absolute;
+    right: 0;
+    top: 0;
+    border-left: 1px solid #58775d;
+    bottom: 0;
+    width: 256px;
+    font-size: 11px;
+    padding-left: 11px;
+    background-color: white;
+}
+
+.events h3 {
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+.w {
+    padding: 16px;
+    position: absolute;
+    z-index: 4;
+    border: 1px solid #2e6f9a;
+    box-shadow: 2px 2px 19px #e0e0e0;
+    -o-box-shadow: 2px 2px 19px #e0e0e0;
+    -webkit-box-shadow: 2px 2px 19px #e0e0e0;
+    -moz-box-shadow: 2px 2px 19px #e0e0e0;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+    opacity: 0.8;
+    cursor: move;
+    background-color: white;
+    font-size: 11px;
+    -webkit-transition: background-color 0.25s ease-in;
+    -moz-transition: background-color 0.25s ease-in;
+    transition: background-color 0.25s ease-in;
+}
+
+.w:hover {
+    background-color: #5c96bc;
+    color: white;
+
+}
+
+.aLabel {
+    -webkit-transition: background-color 0.25s ease-in;
+    -moz-transition: background-color 0.25s ease-in;
+    transition: background-color 0.25s ease-in;
+}
+
+.aLabel.jtk-hover, .jtk-source-hover, .jtk-target-hover {
+    background-color: #1e8151;
+    color: white;
+}
+
+.aLabel {
+    background-color: white;
+    opacity: 0.8;
+    padding: 0.3em;
+    border-radius: 0.5em;
+    border: 1px solid #346789;
+    cursor: pointer;
+}
+
+.ep {
+    position: absolute;
+    bottom: 37%;
+    right: 5px;
+    width: 1em;
+    height: 1em;
+    background-color: orange;
+    cursor: pointer;
+    box-shadow: 0 0 2px black;
+    -webkit-transition: -webkit-box-shadow 0.25s ease-in;
+    -moz-transition: -moz-box-shadow 0.25s ease-in;
+    transition: box-shadow 0.25s ease-in;
+}
+
+.ep:hover {
+    box-shadow: 0 0 6px black;
+}
+
+.statemachine-demo .jtk-endpoint {
+    z-index: 3;
+}
+
+#opened {
+    left: 10em;
+    top: 5em;
+}
+
+#phone1 {
+    left: 35em;
+    top: 12em;
+    width: 7em;
+}
+
+#inperson {
+    left: 12em;
+    top: 23em;
+}
+
+#phone2 {
+    left: 28em;
+    top: 24em;
+}
+
+#rejected {
+    left: 10em;
+    top: 35em;
+}
+
+.dragHover {
+    border: 2px solid orange;
+}
+
+path, .jtk-endpoint { cursor:pointer; }
