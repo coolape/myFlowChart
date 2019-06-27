@@ -1,113 +1,95 @@
 var grid = {}
-grid.DrawLine = function (startX, startY, endX, endY) {
-    var le = document.createElement("<v:line><v:line>");
-    le.from = startX + ',' + startY;
-    le.to = endX + ',' + endY;
-    le.strokecolor = "red";
-    le.strokeweight = "1pt";
-    return le;
-}
-grid.kXAxis = { x: 1, y: 0, z: 0 };       // points in the directon of the positive X axis
-grid.kZAxis = { x: 0, y: 0, z: 1 };       // points in the direction of the positive Y axis
+
+grid.kXAxis = new Victor(1, 0);       // points in the directon of the positive X axis
+grid.kZAxis = new Victor(0, 1);       // points in the direction of the positive Y axis
 grid.kDepth = 1;           // used for intersection tests done in 3D.
 
 grid.m_numberOfRows = 10;
 grid.m_numberOfColumns = 10;
 grid.m_cellSize = 1;
-grid.m_origin = { x: 0, y: 0 }
+grid.m_origin = null;
 
-grid.Width = function () {
-    return (grid.m_numberOfColumns * grid.m_cellSize);
+
+grid.DrawLine = function (from, to, color, contaner) {
+    //<div style="width:480px;height:1px; background:#E0E0E0;"></div>
+    var le = document.createElement("div");
+    return le;
 }
-
-grid.Height = function () {
-    return (grid.m_numberOfRows * grid.m_cellSize);
-}
-
-grid.Origin = function () {
-    return grid.m_origin;
-}
-
-grid.NumberOfCells = function () {
-    return grid.m_numberOfRows * grid.m_numberOfColumns;
-}
-
-grid.Left = function () {
-    return grid.Origin.x;
-}
-
-grid.Right = function () {
-    return grid.Origin.x + grid.Width;
-}
-
-grid.Top = function () {
-    return grid.Origin.z + grid.Height;
-}
-
-grid.Bottom = function () {
-    return grid.Origin.z;
-}
-
-grid.CellSize = function () {
-    return grid.m_cellSize;
-}
-
-// Use this for initialization
+/**
+ * Use this for initialization
+ * @method init
+ * @for flowChartKit
+ * @param {Victor} origin jsPlumb的实例
+ * @param {Number} numRows 网格行
+ * @param {Number} numCols 网格列
+ * @param {Number} cellSize 网格大小
+ * @return {null} null
+ */
 grid.init = function (origin, numRows, numCols, cellSize) {
     grid.m_origin = origin;
     grid.m_numberOfRows = numRows;
     grid.m_numberOfColumns = numCols;
     grid.m_cellSize = cellSize;
+
+    grid.Width = (grid.m_numberOfColumns * grid.m_cellSize);
+    grid.Height = (grid.m_numberOfRows * grid.m_cellSize);
+    grid.Origin = grid.m_origin;
+    grid.NumberOfCells = grid.m_numberOfRows * grid.m_numberOfColumns;
+    grid.Left = grid.Origin.x;
+    grid.Right = grid.Origin.x + grid.Width;
+    grid.Top = grid.Origin.z + grid.Height;
+    grid.Bottom = grid.Origin.z;
+    grid.CellSize = grid.m_cellSize;
 }
 
-grid.DebugDraw = function (origin, numRows, numCols, cellSize, color) {
-    var width = (numCols * cellSize);
-    var height = (numRows * cellSize);
+grid.DebugDraw = function (color) {
+    var width = grid.Width;
+    var height = grid.Height;
 
     // Draw the horizontal grid lines
-    for (i = 0; i < numRows + 1; i++) {
-        var startPos = origin + i * cellSize * kZAxis;
-        var endPos = startPos + width * kXAxis;
-        Debug.DrawLine(startPos, endPos, color);
+    for (i = 0; i < grid.m_numberOfRows + 1; i++) {
+        var startPos = grid.Origin.add( grid.kZAxis.multiplyScalar(i * grid.CellSize));
+        var endPos = startPos + width * grid.kXAxis;
+        grid.DrawLine(startPos, endPos, color);
     }
 
     // Draw the vertial grid lines
-    for (i = 0; i < numCols + 1; i++) {
-        var startPos = origin + i * cellSize * kXAxis;
-        var endPos = startPos + height * kZAxis;
-        Debug.DrawLine(startPos, endPos, color);
+    for (i = 0; i < grid.m_numberOfColumns + 1; i++) {
+        // var startPos = origin + i * cellSize * kXAxis;
+        var startPos = grid.Origin.add( grid.kXAxis.multiplyScalar(i * grid.CellSize));
+        var endPos = startPos.add(grid.kZAxis.multiplyScalar(height));
+        grid.DrawLine(startPos, endPos, color);
     }
 }
 
 // pos is in world space coordinates. The returned position is also in world space coordinates.
-grid.GetNearestCellCenter(pos)
-{
-    var index = GetCellIndex(pos);
-    Vector3 cellPos = GetCellPosition(index);
-    cellPos.x += (m_cellSize / 2.0f);
-    cellPos.z += (m_cellSize / 2.0f);
+grid.GetNearestCellCenter(pos) = function () {
+    var index = grid.GetCellIndex(pos);
+    var cellPos = grid.GetCellPosition(index);
+    cellPos.x += (m_cellSize / 2);
+    cellPos.z += (m_cellSize / 2);
     return cellPos;
 }
 
-        // returns a position in world space coordinates.
-        public Vector3 GetCellCenter(int index)
+// returns a position in world space coordinates.
+grid.GetCellCenter(int index)
 {
     Vector3 cellPosition = GetCellPosition(index);
     cellPosition.x += (m_cellSize / 2.0f);
     cellPosition.z += (m_cellSize / 2.0f);
     return cellPosition;
 }
-        public Vector3 GetCellCenter(int col, int row)
+grid.GetCellCenter(int col, int row)
 {
     return GetCellCenter(GetCellIndex(col, row));
 }
-        /// <summary>
-        /// Returns the lower left position of the grid cell at the passed tile index. The origin of the grid is at the lower left,
-        /// so it uses a cartesian coordinate system.
-        /// </summary>
-        /// <param name="index">index to the grid cell to consider</param>
-        /// <returns>Lower left position of the grid cell (origin position of the grid cell), in world space coordinates</returns>
-        public Vector3 GetCellPosition(int index)
+/// <summary>
+/// Returns the lower left position of the grid cell at the passed tile index. The origin of the grid is at the lower left,
+/// so it uses a cartesian coordinate system.
+/// </summary>
+/// <param name="index">index to the grid cell to consider</param>
+/// <returns>Lower left position of the grid cell (origin position of the grid cell), in world space coordinates</returns>
+grid.GetCellPosition(int index)
 {
     int row = GetRow(index);
     int col = GetColumn(index);
@@ -117,8 +99,8 @@ grid.GetNearestCellCenter(pos)
     return cellPosition;
 }
 
-        // pass in world space coords. Get the tile index at the passed position
-        public int GetCellIndex(Vector3 pos)
+// pass in world space coords. Get the tile index at the passed position
+grid.GetCellIndex(Vector3 pos)
 {
     if (!IsInBounds(pos)) {
         return -1;
@@ -129,13 +111,13 @@ grid.GetNearestCellCenter(pos)
     return GetCellIndex((int)(pos.x / m_cellSize), (int)(pos.z / m_cellSize));
 }
 
-        public int GetCellIndex(int col, int row)
+grid.GetCellIndex(int col, int row)
 {
     return (row * m_numberOfColumns + col);
 }
 
-        // pass in world space coords. Get the tile index at the passed position, clamped to be within the grid.
-        public int GetCellIndexClamped(Vector3 pos)
+// pass in world space coords. Get the tile index at the passed position, clamped to be within the grid.
+grid.GetCellIndexClamped(Vector3 pos)
 {
     pos -= Origin;
 
@@ -149,45 +131,29 @@ grid.GetNearestCellCenter(pos)
     return (row * m_numberOfColumns + col);
 }
 
-        public Bounds GetCellBounds(int index)
-{
-    Vector3 cellCenterPos = GetCellPosition(index);
-    cellCenterPos.x += (m_cellSize / 2.0f);
-    cellCenterPos.z += (m_cellSize / 2.0f);
-    Bounds cellBounds = new Bounds(cellCenterPos, new Vector3(m_cellSize, kDepth, m_cellSize));
-    return cellBounds;
-}
-
-        public Bounds GetGridBounds()
-{
-    Vector3 gridCenter = Origin + (Width / 2.0f) * kXAxis + (Height / 2.0f) * kZAxis;
-    Bounds gridBounds = new Bounds(gridCenter, new Vector3(Width, kDepth, Height));
-    return gridBounds;
-}
-
-        public int GetRow(int index)
+grid.GetRow(int index)
 {
     int row = index / m_numberOfColumns; //m_numberOfRows;
     return row;
 }
 
-        public int GetColumn(int index)
+grid.GetColumn(int index)
 {
     int col = index % m_numberOfColumns;
     return col;
 }
-        public int GetX(int index)
+grid.GetX(int index)
 {
     return GetColumn(index);
 }
 
-        public int GetY(int index)
+grid.GetY(int index)
 {
     return GetRow(index);
 }
 
 
-        public bool IsInBounds(int col, int row)
+grid.IsInBounds(int col, int row)
 {
     if (col < 0 || col >= m_numberOfColumns) {
         return false;
@@ -200,13 +166,13 @@ grid.GetNearestCellCenter(pos)
     }
 }
 
-        public bool IsInBounds(int index)
+grid.IsInBounds(int index)
 {
     return (index >= 0 && index < NumberOfCells);
 }
 
-        // pass in world space coords
-        public bool IsInBounds(Vector3 pos)
+// pass in world space coords
+grid.IsInBounds(Vector3 pos)
 {
     return (pos.x >= Left &&
         pos.x <= Right &&
@@ -215,7 +181,7 @@ grid.GetNearestCellCenter(pos)
 }
 
 
-        public int LeftIndex(int index)
+grid.LeftIndex(int index)
 {
     int col = GetColumn(index);
     int row = GetRow(index);
@@ -228,7 +194,7 @@ grid.GetNearestCellCenter(pos)
     }
 }
 
-        public int RightIndex(int index)
+grid.RightIndex(int index)
 {
     int col = GetColumn(index);
     int row = GetRow(index);
@@ -240,7 +206,7 @@ grid.GetNearestCellCenter(pos)
         return -1;
     }
 }
-        public int UpIndex(int index)
+grid.UpIndex(int index)
 {
     int col = GetColumn(index);
     int row = GetRow(index);
@@ -253,7 +219,7 @@ grid.GetNearestCellCenter(pos)
     }
 }
 
-        public int DownIndex(int index)
+grid.DownIndex(int index)
 {
     int col = GetColumn(index);
     int row = GetRow(index);
@@ -266,7 +232,7 @@ grid.GetNearestCellCenter(pos)
     }
 }
 
-        public int LeftUpIndex(int index)
+grid.LeftUpIndex(int index)
 {
     int col = GetColumn(index);
     int row = GetRow(index);
@@ -280,7 +246,7 @@ grid.GetNearestCellCenter(pos)
     }
 }
 
-        public int RightUpIndex(int index)
+grid.RightUpIndex(int index)
 {
     int col = GetColumn(index);
     int row = GetRow(index);
@@ -294,7 +260,7 @@ grid.GetNearestCellCenter(pos)
     }
 }
 
-        public int LeftDownIndex(int index)
+grid.LeftDownIndex(int index)
 {
     int col = GetColumn(index);
     int row = GetRow(index);
@@ -308,7 +274,7 @@ grid.GetNearestCellCenter(pos)
     }
 }
 
-        public int RightDownIndex(int index)
+grid.RightDownIndex(int index)
 {
     int col = GetColumn(index);
     int row = GetRow(index);
@@ -322,19 +288,19 @@ grid.GetNearestCellCenter(pos)
     }
 }
 
-        /// <summary>
-        /// Gets the own grids.根据中心点及占用格子size,取得占用格子index数,注意只有在长宽一样的情况时
-        /// </summary>
-        /// <returns>
-        /// The own grids.
-        /// </returns>
-        /// <param name='center'>
-        /// Center. 中心点index
-        /// </param>
-        /// <param name='size'>
-        /// Size. Size * Size的范围
-        /// </param>
-        public List < int > getCells(int center, int size)
+/// <summary>
+/// Gets the own grids.根据中心点及占用格子size,取得占用格子index数,注意只有在长宽一样的情况时
+/// </summary>
+/// <returns>
+/// The own grids.
+/// </returns>
+/// <param name='center'>
+/// Center. 中心点index
+/// </param>
+/// <param name='size'>
+/// Size. Size * Size的范围
+/// </param>
+grid.getCells(int center, int size)
 {
     List < int > ret = new List<int>();
     if (center < 0) {
@@ -428,6 +394,4 @@ grid.GetNearestCellCenter(pos)
         }
     }
     return ret;
-}
-    }
 }
