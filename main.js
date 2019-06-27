@@ -1,4 +1,5 @@
 
+//树的数据
 function getTreeData() {
   var tree = [
     {
@@ -17,11 +18,12 @@ function getTreeData() {
   return tree;
 }
 
+// flowchart处理
 jsPlumb.ready(function () {
   console.log("jsPlumb is ready to use");
 
   //Initialize JsPlumb
-  var instance = flowChartKit.init("flow-panel");
+  var instance = flowChartKit.init("flow-panel", flowChartKit.Connector.StateMachine);
 
   //Initialize Control Tree View
   $('#control-panel').treeview({ data: getTreeData() });
@@ -49,7 +51,7 @@ jsPlumb.ready(function () {
     // addPorts(instance, node, ['out'], 'output');
     // addPorts(instance, node, ['in1', 'in2'], 'input');
     // instance.draggable($(node));
-    flowChartKit.newNode(instance, null, mx, my, "new node")
+    flowChartKit.newNode(null, mx, my, "new node")
   }).on('dragover', function (ev) {
     ev.preventDefault();
     console.log('on drag over');

@@ -58,6 +58,10 @@
     display:block;
 }
 
+.del[delete-all] {
+    background-color: pink;
+}
+
 .del:after {
     content:"X";
 }
@@ -75,9 +79,6 @@
     content:"+";
 }
 
-.del[delete-all] {
-    background-color: pink;
-}
 
 .jtk-connector path {
     stroke-width:1;
@@ -150,12 +151,6 @@
 
 }
 
-.aLabel {
-    -webkit-transition: background-color 0.25s ease-in;
-    -moz-transition: background-color 0.25s ease-in;
-    transition: background-color 0.25s ease-in;
-}
-
 .aLabel.jtk-hover, .jtk-source-hover, .jtk-target-hover {
     background-color: #1e8151;
     color: white;
@@ -168,6 +163,21 @@
     border-radius: 0.5em;
     border: 1px solid #346789;
     cursor: pointer;
+}
+.dLabel {
+    position:absolute;
+    opacity: 0.6;
+    top:3px;
+    left:3px;
+    background-color:pink;
+    padding:1px;
+    cursor:pointer;
+    font-size:12px;
+    width:18px;
+    height:18px;
+    border-radius: 50%;
+    text-align:center;
+    display:block;
 }
 
 .ep {

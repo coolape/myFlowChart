@@ -1,30 +1,57 @@
 var flowChartKit = {}
 
+//连接类型枚举
+flowChartKit.Connector = {
+    Bezier: "Bezier",
+    Straight: "Straight",
+    StateMachine: "StateMachine",
+    Flowchart: "Flowchart",
+}
+
+flowChartKit.activeConnection = null;   // 活动的连接
+flowChartKit.jsPlumbIns = null;   // jsPlumb的实例
+
 /**
  * 初始化
  * @method init
  * @for flowChartKit
- * @param {jsPlumb} jsPlumbIns jsPlumb的实例
+ * @param {String} container 容器id
+ * @param {flowChartKit.Connector} connector 连接类型
  */
-flowChartKit.init = function (container, onClickNode, onClickConnection) {
+flowChartKit.init = function (container, connector, onClickNode, onClickConnection) {
     var color = "#E8C870";
     var jsPlumbIns = jsPlumb.getInstance({
         Endpoint: ["Dot", { radius: 5 }],
         EndpointStyle: { fill: "#ffa500" },
-        Connector: "StateMachine",
+        Connector: connector,
         HoverPaintStyle: { stroke: "#1e8151", strokeWidth: 2 },
         ConnectionOverlays: [
             ["Arrow", {
                 location: 1,
                 id: "arrow",
-                length: 14,
-                foldback: 0.8
+                length: 8,
+                width:10,
+                foldback: 0.623
             }],
             ["Label", {
-                location: 0.2,
-                label: "x", id: "label",
+                location: 0.75,
+                label: "con", id: "label",
                 cssClass: "aLabel"
-            }]
+            }],
+            ["Label", {
+                location: 0.25,
+                label: "x", id: "del_connection",
+                cssClass: "dLabel",
+                events: {
+                    click: function (labelOverlay, originalEvent) {
+                        // 删除连接
+                        if (flowChartKit.activeConnection != null) {
+                            flowChartKit.delConnection(flowChartKit.activeConnection);
+                            flowChartKit.activeConnection = null;
+                        }
+                    }
+                }
+            }],
         ],
         Container: container
     });
@@ -52,7 +79,7 @@ flowChartKit.init = function (container, onClickNode, onClickConnection) {
     // this listener sets the connection's internal
     // id as the label overlay's text.
     jsPlumbIns.bind("connection", function (info) {
-        info.connection.getOverlay("label").setLabel("");
+        info.connection.getOverlay("label").setLabel(info.connection.id);
         console.log("connection==" + info.connection.id);
         console.log("source==" + info.connection.source.id)
         console.log("target==" + info.connection.target.id)
@@ -68,20 +95,31 @@ flowChartKit.init = function (container, onClickNode, onClickConnection) {
         console.log("connectionMoved==" + info.connection.id);
     });
 
+    jsPlumbIns.bind("mouseover", function (connection) {
+        // info.connection.getOverlay("label").setLabel(info.connection.id);
+        flowChartKit.activeConnection = connection
+    });
+
+    jsPlumbIns.bind("mouseout", function (connection) {
+        // info.connection.getOverlay("label").setLabel(info.connection.id);
+        flowChartKit.activeConnection = null;
+    });
+
     // delete group button
     jsPlumb.on(canvas, "click", ".del", function () {
         var node = this.parentNode.getAttribute("jpNode");
         // jsPlumbIns.removeGroup(node, this.getAttribute("delete-all") != null);
         // jsPlumbIns.deleteConnectionsForElement(node)
         if (node != null) {
-            flowChartKit.delNode(jsPlumbIns, node);
+            flowChartKit.delNode(node);
         }
     });
 
     // bind a double click listener to "canvas"; add new node when this occurs.
     jsPlumb.on(canvas, "dblclick", function (e) {
-        flowChartKit.newNode(jsPlumbIns, null, e.offsetX, e.offsetY, "New Node");
+        flowChartKit.newNode(null, e.offsetX, e.offsetY, "New Node");
     });
+    flowChartKit.jsPlumbIns = jsPlumbIns;
     return jsPlumbIns;
 }
 
@@ -96,7 +134,8 @@ flowChartKit.init = function (container, onClickNode, onClickConnection) {
  * @param {String} name 节点名
  * @return {Element} 节点
  */
-flowChartKit.newNode = function (jsPlumbIns, id, x, y, name) {
+flowChartKit.newNode = function (id, x, y, name) {
+    var jsPlumbIns = flowChartKit.jsPlumbIns
     var d = document.createElement("div");
     if (id == null) {
         id = jsPlumbUtil.uuid();
@@ -121,7 +160,6 @@ flowChartKit.newNode = function (jsPlumbIns, id, x, y, name) {
     $('#' + id).on('mousedown', function (ev) {
         $('#' + id).off('mouseover');
         $('#' + id).on('mousemove', function (ev) {
-            console.log("mousemove")
             $('#' + delBtnID).hide()
         });
     });
@@ -133,7 +171,7 @@ flowChartKit.newNode = function (jsPlumbIns, id, x, y, name) {
         });
     });
 
-    flowChartKit.initNode(jsPlumbIns, d, -1, -1, false);
+    flowChartKit.initNode(d, -1, -1, false);
     return d;
 }
 
@@ -148,7 +186,8 @@ flowChartKit.newNode = function (jsPlumbIns, id, x, y, name) {
  * @param {bool} allowLoopback 是否可以自己连接自己
  * @return {Element} 节点
  */
-flowChartKit.initNode = function (jsPlumbIns, el, maxIn, maxOut, allowLoopback) {
+flowChartKit.initNode = function (el, maxIn, maxOut, allowLoopback) {
+    var jsPlumbIns = flowChartKit.jsPlumbIns
     // initialise draggable elements.
     jsPlumbIns.draggable(el);
 
@@ -190,7 +229,8 @@ flowChartKit.initNode = function (jsPlumbIns, el, maxIn, maxOut, allowLoopback) 
  * @param {jsPlumb} jsPlumbIns jsPlumb的实例
  * @param {Element} node Element对象
  */
-flowChartKit.delNode = function (jsPlumbIns, node) {
+flowChartKit.delNode = function (node) {
+    var jsPlumbIns = flowChartKit.jsPlumbIns
     // jsPlumbIns.removeGroup(node, true);
     jsPlumbIns.deleteConnectionsForElement(node)
     jsPlumbIns.remove(node)
@@ -204,8 +244,14 @@ flowChartKit.connect = function () {
 
 }
 
-flowChartKit.delConnection = function () {
-
+/**
+ * 删除连接
+ * @method delConnection
+ * @for flowChartKit
+ * @param {Connection} connection 连接对象
+ */
+flowChartKit.delConnection = function (connection) {
+    flowChartKit.jsPlumbIns.deleteConnection(connection);
 }
 
 flowChartKit.getNodeInfor = function () {
@@ -214,4 +260,8 @@ flowChartKit.getNodeInfor = function () {
 
 flowChartKit.getConnectionInfor = function () {
 
+}
+
+flowChartKit.clean = function () {
+    flowChartKit.activeConnection = null;
 }
