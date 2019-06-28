@@ -12,6 +12,8 @@
   <link rel="stylesheet" type="text/css" href="./css/bootstrap-treeview.min.css" />
   <link rel="stylesheet" type="text/css" href="./css/myFlowChart.css" />
   <link rel="stylesheet" type="text/css" href="../jsplumb-master/css/jsplumb.css" />
+  <link rel="stylesheet" type="text/css" href="../jsplumb-master/css/jsplumbtoolkit-demo.css">
+  <link rel="stylesheet" type="text/css" href="../jsplumb-master/css/main.css" />
 
 
   <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -43,8 +45,8 @@
       </div>
       <div class="col-md-6" style="height:400px">
         <div class="panel panel-default" style="margin:2px;height:400px">
-          <div class="panel-body">
-            <div id="flow-panel" class='col-md-12' style="position:absolute;height:100%">
+          <div class="flowchart-canvas canvas-nopan" style="height:400px" id="flow-canvas">
+            <div id="flow-panel" style="position:absolute;height:100%;width:100%">
             </div>
           </div>
         </div>
@@ -68,14 +70,17 @@
   <script type='text/javascript'></script>
   <script type="text/javascript" src="./libs/jquery-1.11.1.min.js"></script>
   <script type="text/javascript" src="./libs/jquery-ui-1.9.2.min.js"></script>
+  <script type="text/javascript" src="../jquery-mousewheel-3.1.13/jquery.mousewheel.min.js"></script>
   <script type="text/javascript" src="./libs/bootstrap.min.js"></script>
   <script type="text/javascript" src="./libs/bootstrap-treeview.min.js"></script>
   <script type="text/javascript" src="./libs/json2.js"></script>
-  <script src="../jsplumb-master/dist/js/jsplumb.js"></script>
-  <script src="../victor-master/build/victor.js"></script>
 
-  <script type="text/javascript" src="./flowChartKit.js"></script>
-  <script type="text/javascript" src="./main.js"></script>
+  <script type="text/javascript" src="../js-vector-master/js/vector.js"></script>
+  <script type="text/javascript" src="../jsplumb-master/dist/js/jsplumb.js"></script>
+
+  <script type="text/javascript" src="./js/flowChartKit.js"></script>
+  <script type="text/javascript" src="./js/Grid.js"></script>
+  <script type="text/javascript" src="./js/main.js"></script>
 </body>
 
 </html>

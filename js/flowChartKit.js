@@ -19,6 +19,10 @@ flowChartKit.jsPlumbIns = null;   // jsPlumb的实例
  * @param {flowChartKit.Connector} connector 连接类型
  */
 flowChartKit.init = function (container, connector, onClickNode, onClickConnection) {
+    var w = $("#"+container).width()
+    var h = $("#"+container).height()
+    $("#"+container).width(w*10)
+    $("#"+container).height(h*10)
     var color = "#E8C870";
     var jsPlumbIns = jsPlumb.getInstance({
         Endpoint: ["Dot", { radius: 5 }],
@@ -30,7 +34,7 @@ flowChartKit.init = function (container, connector, onClickNode, onClickConnecti
                 location: 1,
                 id: "arrow",
                 length: 8,
-                width:10,
+                width: 10,
                 foldback: 0.623
             }],
             ["Label", {
@@ -265,3 +269,35 @@ flowChartKit.getConnectionInfor = function () {
 flowChartKit.clean = function () {
     flowChartKit.activeConnection = null;
 }
+
+flowChartKit.getZoom = function()
+{
+    return flowChartKit.jsPlumbIns.getZoom();
+}
+
+/*
+el is a DOM element. You don't have to pass in el; if you do not, it uses the Container from the jsPlumb instance.
+transformOrigin is optional; it defaults to [0.5, 0.5] - the middle of the element (this is the browser default too)
+instance is an instance of jsPlumb - either jsPlumb, the static instance, or some instance you got through jsPlumb.newInstance(...). The function will default to using the static instance of jsPlumb if you do not provide one.
+zoom is a decimal where 1 means 100%.
+*/
+flowChartKit.setZoom = function (zoom, instance, transformOrigin, el) {
+    instance = instance || flowChartKit.jsPlumbIns;
+    transformOrigin = transformOrigin || [0.5, 0.5];
+    instance = instance || jsPlumb;
+    el = el || instance.getContainer();
+    var p = ["webkit", "moz", "ms", "o"],
+        s = "scale(" + zoom + ")",
+        oString = (transformOrigin[0] * 100) + "% " + (transformOrigin[1] * 100) + "%";
+
+    for (var i = 0; i < p.length; i++) {
+        el.style[p[i] + "Transform"] = s;
+        el.style[p[i] + "TransformOrigin"] = oString;
+    }
+
+    el.style["transform"] = s;
+    el.style["transformOrigin"] = oString;
+
+    instance.setZoom(zoom);
+};
+
