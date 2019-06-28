@@ -21,49 +21,67 @@ function getTreeData() {
 // flowchart处理
 jsPlumb.ready(function () {
   console.log("jsPlumb is ready to use");
+
+  //画布
+  var canvas = $("#flow-canvas");
+  //流程图的panel
   var contanerId = "flow-panel"
   var flowChartContaner = $('#' + contanerId)
+  //============================================
+  //设置网格
+  var grid = Grid.new(contanerId, 1000, 1000, 20);
+  grid.DebugDraw("#DCDCDC");
+  flowChartContaner.width(grid.Width);
+  flowChartContaner.height(grid.Height);
+  console.log(-flowChartContaner.width()/2 + canvas.width()/2)
+  flowChartContaner.offset({ left: -flowChartContaner.width()/2 + canvas.width()/2 + canvas.offset().left });
+  //============================================
   //Initialize JsPlumb
   var instance = flowChartKit.init(contanerId, flowChartKit.Connector.StateMachine);
-  var grid = Grid.new();
-  grid.init(contanerId, 1000, 1000, 20);
-  grid.DebugDraw("#DCDCDC")
-
-  var canvas = $("#flow-canvas");
-
+  flowChartKit.setZoom(1, [50, 0]);
+  //============================================
+  //处理画布拖动
   canvas.on('mousedown', function (event) {
-    var old = new Vector(event.originalEvent.offsetX, event.originalEvent.offsetY);
+    var old = new Vector(event.pageX, event.pageY);
     canvas.on('mousemove', function (ev) {
-      var now = new Vector(ev.originalEvent.offsetX, ev.originalEvent.offsetY);
+      var now = new Vector(ev.pageX, ev.pageY);
       var diff = Vector.sub(now, old);
-
+      // console.log(diff)
       var pos = new Vector(flowChartContaner.offset().left, flowChartContaner.offset().top);
       pos = Vector.add(pos, diff);
-      flowChartContaner.offset({left:pos.x, top:pos.y});
+      flowChartContaner.offset({ left: pos.x, top: pos.y });
       old = now;
     });
   });
   canvas.on('mouseup', function (event) {
     canvas.off('mousemove');
   });
-
+  canvas.mouseleave(function(ev)
+  {
+    canvas.off('mousemove');
+  });
+  //============================================
+  //处理画布缩放
   canvas.bind('mousewheel', function (event) {
     // console.log(event.deltaX, event.deltaY, event.deltaFactor);
-    var delta = event.deltaY
+    var delta = Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+    delta = delta * event.deltaFactor * 0.001
     var dir = delta > 0 ? 'Up' : 'Down';
-    // if (dir == 'Up') {
-    //   console.log("向上滚动");
-    // } else {
-    //   console.log("向下滚动");
-    // }
     var zoom = flowChartKit.getZoom();
-    zoom += delta * event.deltaFactor * 0.001
+    zoom += delta
     zoom = zoom > 3 ? 3 : zoom;
     zoom = zoom < 0.1 ? 0.1 : zoom;
-    flowChartKit.setZoom(zoom)
+
+    // var pos = new Vector(flowChartContaner.offset().left, flowChartContaner.offset().top);
+    // var per = canvas.width() / canvas.height();
+    // var diff = Vector.mul(new Vector(1, 1 / per), delta)
+    // pos = Vector.add(pos, diff);
+    // flowChartContaner.offset({left:pos.x, top:pos.y});
+
+    flowChartKit.setZoom(zoom, [0.5, 0])
     return false;
   });
-
+  //============================================
   //Initialize Control Tree View
   $('#control-panel').treeview({ data: getTreeData() });
 
@@ -74,7 +92,7 @@ jsPlumb.ready(function () {
     // console.log('drag start');
   });
 
-  $('#flow-panel').on('drop', function (ev) {
+  canvas.on('drop', function (ev) {
     //avoid event conlict for jsPlumb
     if (ev.target.className.indexOf('_jsPlumb') >= 0) {
       return;

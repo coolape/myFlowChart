@@ -15,14 +15,15 @@ flowChartKit.jsPlumbIns = null;   // jsPlumb的实例
  * 初始化
  * @method init
  * @for flowChartKit
- * @param {String} container 容器id
+ * @param {String} containerId 容器id
  * @param {flowChartKit.Connector} connector 连接类型
  */
-flowChartKit.init = function (container, connector, onClickNode, onClickConnection) {
-    var w = $("#"+container).width()
-    var h = $("#"+container).height()
-    $("#"+container).width(w*10)
-    $("#"+container).height(h*10)
+flowChartKit.init = function (containerId, connector, onClickNode, onClickConnection) {
+    var contaner = $("#" + containerId);
+    // var w = contaner.width()
+    // var h = contaner.height()
+    // contaner.width(w * 10)
+    // contaner.height(h * 10)
     var color = "#E8C870";
     var jsPlumbIns = jsPlumb.getInstance({
         Endpoint: ["Dot", { radius: 5 }],
@@ -57,7 +58,7 @@ flowChartKit.init = function (container, connector, onClickNode, onClickConnecti
                 }
             }],
         ],
-        Container: container
+        Container: containerId
     });
 
     var canvas = jsPlumbIns.Defaults.Container;
@@ -120,9 +121,12 @@ flowChartKit.init = function (container, connector, onClickNode, onClickConnecti
     });
 
     // bind a double click listener to "canvas"; add new node when this occurs.
+    /*
     jsPlumb.on(canvas, "dblclick", function (e) {
         flowChartKit.newNode(null, e.offsetX, e.offsetY, "New Node");
     });
+    */
+
     flowChartKit.jsPlumbIns = jsPlumbIns;
     return jsPlumbIns;
 }
@@ -149,6 +153,7 @@ flowChartKit.newNode = function (id, x, y, name) {
     d.id = id;
     d.setAttribute("jpNode", id)
     d.innerHTML = "<div class=\"del\" delete-all id=\"" + delBtnID + "\"></div>" + name + "<div class=\"ep\"></div>";
+    d.style.position = "absolute";
     d.style.left = x + "px";
     d.style.top = y + "px";
     jsPlumbIns.getContainer().appendChild(d);
@@ -270,8 +275,7 @@ flowChartKit.clean = function () {
     flowChartKit.activeConnection = null;
 }
 
-flowChartKit.getZoom = function()
-{
+flowChartKit.getZoom = function () {
     return flowChartKit.jsPlumbIns.getZoom();
 }
 
@@ -281,8 +285,8 @@ transformOrigin is optional; it defaults to [0.5, 0.5] - the middle of the eleme
 instance is an instance of jsPlumb - either jsPlumb, the static instance, or some instance you got through jsPlumb.newInstance(...). The function will default to using the static instance of jsPlumb if you do not provide one.
 zoom is a decimal where 1 means 100%.
 */
-flowChartKit.setZoom = function (zoom, instance, transformOrigin, el) {
-    instance = instance || flowChartKit.jsPlumbIns;
+flowChartKit.setZoom = function (zoom, transformOrigin, el) {
+    var instance = flowChartKit.jsPlumbIns;
     transformOrigin = transformOrigin || [0.5, 0.5];
     instance = instance || jsPlumb;
     el = el || instance.getContainer();

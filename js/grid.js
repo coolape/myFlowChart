@@ -1,5 +1,16 @@
 var Grid = {}
-Grid.new = function () {
+
+/**
+ * 创建grid实例
+ * @method new
+ * @for grid
+ * @param {String} contanerID 容器id
+ * @param {Number} numRows 网格行
+ * @param {Number} numCols 网格列
+ * @param {Number} cellSize 网格大小
+ * @return {null} null
+ */
+Grid.new = function (contanerID, numRows, numCols, cellSize) {
     var grid = {}
 
     var kXAxis = new Vector(1, 0);       // points in the directon of the positive X axis
@@ -9,7 +20,7 @@ Grid.new = function () {
     var m_numberOfRows = 10;
     var m_numberOfColumns = 10;
     var m_cellSize = 1;
-    var m_origin = null;
+    var m_origin = new Vector(0, 0);
 
     grid.Rows = null;
     grid.Cols = null;
@@ -24,8 +35,16 @@ Grid.new = function () {
     grid.Bottom = null;
     grid.lines = new Array();
 
-
-    grid.DrawLine = function (from, to, color) {
+    /**
+     * 画直线
+     * @method DrawLine
+     * @for grid
+     * @param {Vector} from 开始位置
+     * @param {Vector} to 结束位置
+     * @param {Color} color 颜色
+     * @return {jquery obj} 
+     */
+    var DrawLine = function (from, to, color) {
         var width = 1;
         var height = 1;
         var diff = Vector.sub(to, from);
@@ -37,7 +56,7 @@ Grid.new = function () {
             height = diff.y
         }
         var top = from.y;
-        var left= from.x;
+        var left = from.x;
         var content = '<div style="width:' + width + 'px;height:' + height + 'px; background:' + color + ';position:absolute;top:' + top + 'px;left:' + left + 'px;"></div>';
         var le = grid.Contaner.append(content);
         return le;
@@ -46,7 +65,7 @@ Grid.new = function () {
     /**
      * Use this for initialization
      * @method init
-     * @for flowChartKit
+     * @for grid
      * @param {String} contanerID 容器id
      * @param {Number} numRows 网格行
      * @param {Number} numCols 网格列
@@ -55,8 +74,8 @@ Grid.new = function () {
      */
     grid.init = function (contanerID, numRows, numCols, cellSize) {
         var contaner = $("#" + contanerID)
-        var origin = new Vector(contaner.offset().left, contaner.offset().top);
-        m_origin = new Vector(0,0);// origin;
+        // var origin = new Vector(contaner.offset().left, contaner.offset().top);
+        // m_origin = new Vector(0,0);// origin;
         m_numberOfRows = numRows;
         m_numberOfColumns = numCols;
         m_cellSize = cellSize;
@@ -75,6 +94,12 @@ Grid.new = function () {
         grid.Bottom = grid.Origin.y;
     }
 
+    /**
+     * 画网格
+     * @method DrawLine
+     * @for grid
+     * @param {Color} color 颜色
+     */
     grid.DebugDraw = function (color) {
         var width = grid.Width;
         var height = grid.Height;
@@ -83,7 +108,7 @@ Grid.new = function () {
         for (i = 0; i < m_numberOfRows + 1; i++) {
             var startPos = Vector.add(grid.Origin, Vector.mul(kZAxis, i * grid.CellSize));
             var endPos = Vector.add(startPos, Vector.mul(kXAxis, width));
-            grid.DrawLine(startPos, endPos, color);
+            grid.lines.push(DrawLine(startPos, endPos, color))
         }
 
         // Draw the vertial grid lines
@@ -91,29 +116,48 @@ Grid.new = function () {
             // var startPos = origin + i * cellSize * kXAxis;
             var startPos = Vector.add(grid.Origin, Vector.mul(kXAxis, i * grid.CellSize));
             var endPos = Vector.add(startPos, Vector.mul(kZAxis, height));
-            grid.DrawLine(startPos, endPos, color);
+            grid.lines.push(DrawLine(startPos, endPos, color))
         }
     }
 
-    // pos is in world space coordinates. The returned position is also in world space coordinates.
+    /**
+     * pos is in world space coordinates. The returned position is also in world space coordinates.
+     * @method GetNearestCellCenter
+     * @for grid
+     * @param {Vector} pos 坐标
+     * @return {Vector} 所以所在网格的中心坐标
+     */
     grid.GetNearestCellCenter = function (pos) {
         var index = grid.GetCellIndexByPos(pos);
-        var cellPos = grid.GetCellPositionByIndex(index);
-        cellPos.addScalarX(m_cellSize / 2);
-        cellPos.addScalarY(m_cellSize / 2);
-        return cellPos;
+        return grid.GetCellCenterByIndex(index);
     }
 
-    // returns a position in world space coordinates.
+    /**
+     * returns a position in world space coordinates.
+     * @method GetCellCenterByIndex
+     * @for grid
+     * @param {Int} index 网格的index
+     * @return {Vector} 所以所在网格的中心坐标
+     */
     grid.GetCellCenterByIndex = function (index) {
         var cellPosition = grid.GetCellPositionByIndex(index);
-        cellPosition.addScalarX(m_cellSize / 2);
-        cellPosition.addScalarY(m_cellSize / 2);
+        var offset = m_cellSize / 2
+        cellPosition = Vector.add(cellPosition, new Vector(offset, offset))
         return cellPosition;
     }
-    grid.GetCellCenter = function (col, row) {
-        return grid.GetCellCenterByIndex(grid.GetCellIndex(col, row));
+
+    /**
+     * returns a position in world space coordinates.
+     * @method GetCellCenterByIndex
+     * @for grid
+     * @param {Int} x 网格的x
+     * @param {Int} y 网格的y
+     * @return {Vector} 所以所在网格的中心坐标
+     */
+    grid.GetCellCenter = function (x, y) {
+        return grid.GetCellCenterByIndex(grid.GetCellIndex(x, y));
     }
+
     /// <summary>
     /// Returns the lower left position of the grid cell at the passed tile index. The origin of the grid is at the lower left,
     /// so it uses a cartesian coordinate system.
@@ -125,17 +169,23 @@ Grid.new = function () {
         var col = grid.GetColumn(index);
         var x = col * m_cellSize;
         var y = row * m_cellSize;
-        var cellPosition = grid.Origin.add(new Vector(x, y));
+        var cellPosition = Vector.add(grid.Origin, new Vector(x, y));
         return cellPosition;
     }
 
-    // pass in world space coords. Get the tile index at the passed position
+    /**
+     * pass in world space coords. Get the tile index at the passed position
+     * @method GetCellIndexByPos
+     * @for grid
+     * @param {Vector} pos 坐标
+     * @return {Int} 所以所在网格的index
+     */
     grid.GetCellIndexByPos = function (pos) {
         if (!grid.IsPosInBounds(pos)) {
             return -1;
         }
 
-        pos.subtract(Origin);
+        pos = Vector.sub(pos, Origin);
         var col = parseInt(pos.x / m_cellSize);
         var row = parseInt(pos.y / m_cellSize);
         return grid.GetCellIndex(col, row);
@@ -146,7 +196,7 @@ Grid.new = function () {
     }
 
     grid.GetRow = function (index) {
-        var row = index / m_numberOfColumns; //m_numberOfRows;
+        var row = parseInt(index / m_numberOfColumns); //m_numberOfRows;
         return row;
     }
 
@@ -155,13 +205,21 @@ Grid.new = function () {
         return col;
     }
     grid.GetX = function (index) {
-        return GetColumn(index);
+        return grid.GetColumn(index);
     }
 
     grid.GetY = function (index) {
-        return GetRow(index);
+        return grid.GetRow(index);
     }
 
+    /**
+     * 给定的xy是否在网格内
+     * @method IsInBounds
+     * @for grid
+     * @param {Int} col 
+     * @param {Int} row
+     * @return {Bool} true代表在网格中
+     */
     grid.IsInBounds = function (col, row) {
         if (col < 0 || col >= m_numberOfColumns) {
             return false;
@@ -182,11 +240,17 @@ Grid.new = function () {
     grid.IsPosInBounds = function (pos) {
         return (pos.x >= grid.Left &&
             pos.x <= grid.Right &&
-            pos.z <= grid.Top &&
-            pos.z >= grid.Bottom);
+            pos.y <= grid.Top &&
+            pos.y >= grid.Bottom);
     }
 
-
+    /**
+     * 取得给定index的左边的index
+     * @method LeftIndex
+     * @for grid
+     * @param {Int} index
+     * @return {Int} 为-1时表示左没有格子了
+     */
     grid.LeftIndex = function (index) {
         var col = grid.GetColumn(index);
         var row = grid.GetRow(index);
@@ -286,18 +350,14 @@ Grid.new = function () {
         }
     }
 
-    /// <summary>
-    /// Gets the own grids.根据中心点及占用格子size,取得占用格子index数,注意只有在长宽一样的情况时
-    /// </summary>
-    /// <returns>
-    /// The own grids.
-    /// </returns>
-    /// <param name='center'>
-    /// Center. 中心点index
-    /// </param>
-    /// <param name='size'>
-    /// Size. Size * Size的范围
-    /// </param>
+    /**
+     * Gets the own grids.根据中心点及占用格子size,取得占用格子index数,注意只有在长宽一样的情况时
+     * @method getCells
+     * @for grid
+     * @param {Int} center 网络的index
+     * @param {Int} size Size * Size的范围
+     * @return {Array} 包含所有index的列表
+     */
     grid.getCells = function (center, size) {
         var ret = new Array();
         if (center < 0) {
@@ -380,5 +440,6 @@ Grid.new = function () {
         }
         return ret;
     }
+    grid.init(contanerID, numRows, numCols, cellSize);
     return grid;
 }
