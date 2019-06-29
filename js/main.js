@@ -51,16 +51,18 @@ jsPlumb.ready(function () {
   //设置网格
   var grid = Grid.new(contanerId, 1000, 1000, 20);
   grid.DebugDraw("#DCDCDC");
+  //============================================
+  //设置画板的高度位置及缩放
   flowChartContaner.width(grid.Width);
   flowChartContaner.height(grid.Height);
   var offsetLeft = -flowChartContaner.width() / 2 + canvas.width() / 2 + canvas.offset().left;
   var offsetTop = canvas.offset().top;
   flowChartContaner.offset({ left: offsetLeft, top: offsetTop });
-  var zoomVal = getFlowZoomCenter(canvas, flowChartContaner, 1);
+  var zoomCenter = getFlowZoomCenter(canvas, flowChartContaner, 1);
   //============================================
   //Initialize JsPlumb
   var instance = flowChartKit.init(contanerId, flowChartKit.Connector.StateMachine);
-  flowChartKit.setZoom(1, zoomVal);
+  flowChartKit.setZoom(1, zoomCenter);
   //============================================
   //处理画布拖动
   canvas.on('mousedown', function (event) {
@@ -73,34 +75,36 @@ jsPlumb.ready(function () {
       pos = Vector.add(pos, diff);
       flowChartContaner.offset({ left: pos.x, top: pos.y });
       old = now;
-      //重置流程图panel的中心点
-      zoomVal = getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
     });
   });
   canvas.on('mouseup', function (event) {
+    //要先关mousemove
     canvas.off('mousemove');
+    //重置流程图panel的中心点
+    var old = zoomCenter
+    zoomCenter = getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
+    flowChartKit.setZoomCenter(zoomCenter, old);
   });
   canvas.mouseleave(function (ev) {
+    //要先关mousemove
     canvas.off('mousemove');
+    //重置流程图panel的中心点
+    var old = zoomCenter
+    zoomCenter = getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
+    flowChartKit.setZoomCenter(zoomCenter, old);
   });
   //============================================
   //处理画布缩放
   canvas.bind('mousewheel', function (event) {
     // console.log(event.deltaX, event.deltaY, event.deltaFactor);
     var delta = Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
-    delta = delta * event.deltaFactor * 0.001
+    delta = delta * event.deltaFactor * 0.001;
     var dir = delta > 0 ? 'Up' : 'Down';
     var zoom = flowChartKit.getZoom();
-    zoom += delta
+    zoom += delta;
     zoom = zoom > 3 ? 3 : zoom;
     zoom = zoom < 0.1 ? 0.1 : zoom;
-
-    // var pos = new Vector(flowChartContaner.offset().left, flowChartContaner.offset().top);
-    // var per = canvas.width() / canvas.height();
-    // var diff = Vector.mul(new Vector(1, 1 / per), delta)
-    // pos = Vector.add(pos, diff);
-    // flowChartContaner.offset({left:pos.x, top:pos.y});
-    flowChartKit.setZoom(zoom, zoomVal);
+    flowChartKit.setZoom(zoom, zoomCenter);
     return false;
   });
   //============================================

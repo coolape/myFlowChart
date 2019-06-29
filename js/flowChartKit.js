@@ -20,10 +20,6 @@ flowChartKit.jsPlumbIns = null;   // jsPlumb的实例
  */
 flowChartKit.init = function (containerId, connector, onClickNode, onClickConnection) {
     var contaner = $("#" + containerId);
-    // var w = contaner.width()
-    // var h = contaner.height()
-    // contaner.width(w * 10)
-    // contaner.height(h * 10)
     var color = "#E8C870";
     var jsPlumbIns = jsPlumb.getInstance({
         Endpoint: ["Dot", { radius: 5 }],
@@ -60,9 +56,6 @@ flowChartKit.init = function (containerId, connector, onClickNode, onClickConnec
         ],
         Container: containerId
     });
-
-    var canvas = jsPlumbIns.Defaults.Container;
-    canvas = document.getElementById(canvas);
 
     // jsPlumbIns.importDefaults({
     //     Connector: ["Bezier", { curviness: 150 }],
@@ -111,7 +104,7 @@ flowChartKit.init = function (containerId, connector, onClickNode, onClickConnec
     });
 
     // delete group button
-    jsPlumb.on(canvas, "click", ".del", function () {
+    jsPlumb.on(contaner, "click", ".del", function () {
         var node = this.parentNode.getAttribute("jpNode");
         // jsPlumbIns.removeGroup(node, this.getAttribute("delete-all") != null);
         // jsPlumbIns.deleteConnectionsForElement(node)
@@ -120,9 +113,9 @@ flowChartKit.init = function (containerId, connector, onClickNode, onClickConnec
         }
     });
 
-    // bind a double click listener to "canvas"; add new node when this occurs.
+    // bind a double click listener to "contaner"; add new node when this occurs.
     /*
-    jsPlumb.on(canvas, "dblclick", function (e) {
+    jsPlumb.on(contaner, "dblclick", function (e) {
         flowChartKit.newNode(null, e.offsetX, e.offsetY, "New Node");
     });
     */
@@ -154,13 +147,15 @@ flowChartKit.newNode = function (id, x, y, name) {
     d.setAttribute("jpNode", id)
     d.innerHTML = "<div class=\"del\" delete-all id=\"" + delBtnID + "\"></div>" + name + "<div class=\"ep\"></div>";
     d.style.position = "absolute";
-    d.style.left = x+"px";
-    d.style.top = y+"px";
+    // d.style.left = x+"px";
+    // d.style.top = y+"px";
     jsPlumbIns.getContainer().appendChild(d);
 
     var node = $('#' + id)
-    // var left = x// - node.width()/2;
-    // var top = y// - node.height()/2;
+    var left = x - node.width()/2;
+    var top = y - node.height()/2;
+    d.style.left = left+"px";
+    d.style.top = top+"px";
     // node.offset({left:left, top:top});
 
     node.on('mouseover', function (ev) {
@@ -293,20 +288,52 @@ zoom is a decimal where 1 means 100%.
 flowChartKit.setZoom = function (zoom, transformOrigin, el) {
     var instance = flowChartKit.jsPlumbIns;
     transformOrigin = transformOrigin || [0.5, 0.5];
-    instance = instance || jsPlumb;
     el = el || instance.getContainer();
     var p = ["webkit", "moz", "ms", "o"],
         s = "scale(" + zoom + ")",
         oString = (transformOrigin[0] * 100) + "% " + (transformOrigin[1] * 100) + "%";
 
     for (var i = 0; i < p.length; i++) {
+        el.style[p[i] + "TransformOrigin"] = oString;
         el.style[p[i] + "Transform"] = s;
+    }
+
+    el.style["transformOrigin"] = oString;
+    el.style["transform"] = s;
+
+    instance.setZoom(zoom);
+};
+
+flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
+    var instance = flowChartKit.jsPlumbIns;
+    el = el || instance.getContainer();
+
+    //修正坐标
+    var zoom = flowChartKit.getZoom();
+    var offsetX = (transformOrigin[0] - oldOrigin[0])/100;
+    var offsetY = (transformOrigin[1] - oldOrigin[1])/100;
+    console.log(offsetX + "========" + offsetY + "=======" + zoom)
+    console.log(parseInt(el.style.width) + "========" + el.style.height)
+    offsetX = offsetX * parseInt(el.style.width)/zoom;
+    offsetY = offsetY * parseInt(el.style.height)/zoom/2;
+    console.log(offsetX )
+    var x = parseFloat(el.style.left);
+    var y = parseFloat(el.style.top);
+
+    //=====================================
+    var p = ["webkit", "moz", "ms", "o"],
+        oString = (transformOrigin[0] * 100) + "% " + (transformOrigin[1] * 100) + "%";
+
+    for (var i = 0; i < p.length; i++) {
         el.style[p[i] + "TransformOrigin"] = oString;
     }
 
-    el.style["transform"] = s;
     el.style["transformOrigin"] = oString;
 
-    instance.setZoom(zoom);
+
+
+    el.style.left = (x-offsetX)+"px";
+    el.style.top = (y-offsetY)+"px";
+
 };
 
