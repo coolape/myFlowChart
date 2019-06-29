@@ -5,12 +5,13 @@ var Grid = {}
  * @method new
  * @for grid
  * @param {String} contanerID 容器id
+ * @param {Vector} origin 容器id
  * @param {Number} numRows 网格行
  * @param {Number} numCols 网格列
  * @param {Number} cellSize 网格大小
  * @return {null} null
  */
-Grid.new = function (contanerID, numRows, numCols, cellSize) {
+Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
     var grid = {}
 
     var kXAxis = new Vector(1, 0);       // points in the directon of the positive X axis
@@ -57,7 +58,7 @@ Grid.new = function (contanerID, numRows, numCols, cellSize) {
         }
         var top = from.y;
         var left = from.x;
-        var content = '<div style="width:' + width + 'px;height:' + height + 'px; background:' + color + ';position:absolute;top:' + top + 'px;left:' + left + 'px;"></div>';
+        var content = '<div style="z-index:-12;width:' + width + 'px;height:' + height + 'px; background:' + color + ';position:absolute;top:' + top + 'px;left:' + left + 'px;"></div>';
         var le = grid.Contaner.append(content);
         return le;
     }
@@ -72,10 +73,11 @@ Grid.new = function (contanerID, numRows, numCols, cellSize) {
      * @param {Number} cellSize 网格大小
      * @return {null} null
      */
-    grid.init = function (contanerID, numRows, numCols, cellSize) {
+    grid.init = function (contanerID, origin, numRows, numCols, cellSize) {
         var contaner = $("#" + contanerID)
         // var origin = new Vector(contaner.offset().left, contaner.offset().top);
         // m_origin = new Vector(0,0);// origin;
+        // m_origin = origin;
         m_numberOfRows = numRows;
         m_numberOfColumns = numCols;
         m_cellSize = cellSize;
@@ -440,6 +442,6 @@ Grid.new = function (contanerID, numRows, numCols, cellSize) {
         }
         return ret;
     }
-    grid.init(contanerID, numRows, numCols, cellSize);
+    grid.init(contanerID, origin, numRows, numCols, cellSize);
     return grid;
 }

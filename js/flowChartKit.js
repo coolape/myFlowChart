@@ -136,6 +136,7 @@ flowChartKit.init = function (containerId, connector, onClickNode, onClickConnec
  * @return {Element} 节点
  */
 flowChartKit.newNode = function (id, x, y, name) {
+    console.log("flowChartKit.newNode ")
     var jsPlumbIns = flowChartKit.jsPlumbIns
     var d = document.createElement("div");
     if (id == null) {
@@ -305,6 +306,8 @@ flowChartKit.setZoom = function (zoom, transformOrigin, el) {
 };
 
 flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
+    //TODO:
+    return;
     var instance = flowChartKit.jsPlumbIns;
     el = el || instance.getContainer();
 

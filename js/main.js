@@ -49,8 +49,9 @@ jsPlumb.ready(function () {
   var flowChartContaner = $('#' + contanerId)
   //============================================
   //设置网格
-  var grid = Grid.new(contanerId, 1000, 1000, 20);
-  grid.DebugDraw("#DCDCDC");
+  var origin = new Vector(canvas.offset().left, canvas.offset().top)
+  var grid = Grid.new(contanerId, origin, 10, 10, 20);
+  // grid.DebugDraw("#DCDCDC");//TODO:画线还有问题，要影响拖动创建节点的坐标位置，导致位置不正确
   //============================================
   //设置画板的高度位置及缩放
   flowChartContaner.width(grid.Width);
@@ -70,6 +71,7 @@ jsPlumb.ready(function () {
     canvas.on('mousemove', function (ev) {
       var now = new Vector(ev.pageX, ev.pageY);
       var diff = Vector.sub(now, old);
+      // diff = Vector.mul(diff, 1/flowChartKit.getZoom())
       // console.log(diff)
       var pos = new Vector(flowChartContaner.offset().left, flowChartContaner.offset().top);
       pos = Vector.add(pos, diff);
@@ -116,28 +118,24 @@ jsPlumb.ready(function () {
     //ev.dataTransfer.setData("text", ev.target.id);
     ev.originalEvent.dataTransfer.setData('text', ev.target.textContent);
     // console.log('drag start');
-  });
+    canvas.on('drop', function (ev) {
+      canvas.off('drop');
+      //avoid event conlict for jsPlumb
+      if (ev.target.className.indexOf('_jsPlumb') >= 0) {
+        return;
+      }
 
-  canvas.on('drop', function (ev) {
-    //avoid event conlict for jsPlumb
-    if (ev.target.className.indexOf('_jsPlumb') >= 0) {
-      return;
-    }
+      ev.preventDefault();
+      var mx = ev.originalEvent.offsetX;
+      var my = ev.originalEvent.offsetY;
 
-    ev.preventDefault();
-    var mx = '' + ev.originalEvent.offsetX;
-    var my = '' + ev.originalEvent.offsetY;
-
-    // console.log('on drop : ' + ev.originalEvent.dataTransfer.getData('text'));
-    // var uid = new Date().getTime();
-    // var node = addNode('flow-panel', 'node' + uid, 'node', { x: mx, y: my });
-    // addPorts(instance, node, ['out'], 'output');
-    // addPorts(instance, node, ['in1', 'in2'], 'input');
-    // instance.draggable($(node));
-    flowChartKit.newNode(null, mx, my, "new node")
-  }).on('dragover', function (ev) {
-    ev.preventDefault();
-    // console.log('on drag over');
+      flowChartKit.newNode(null, mx, my, "new node")
+    }).on('dragover', function (ev) {
+      ev.preventDefault();
+      // console.log('on drag over');
+    });
+  }).on("dragend", function (ev) {
+    canvas.off('drop');
   });
 
   jsPlumb.fire("jsFlowLoaded", instance);
