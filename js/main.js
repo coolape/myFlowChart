@@ -17,6 +17,26 @@ function getTreeData() {
 
   return tree;
 }
+/*
+* 取得流程图的每次缩放的中心点
+*/
+getFlowZoomCenter = function (canvas, flowPanel, zoomVal) {
+  var canvasLeft = canvas.offset().left;
+  var canvasTop = canvas.offset().top;
+  var flowLeft = flowPanel.offset().left;
+  var flowTop = flowPanel.offset().top;
+
+  var canvasW = canvas.width();
+  var canvasH = canvas.height();
+  var flowW = flowPanel.width();
+  var flowH = flowPanel.height();
+
+
+  var offX = ((canvasW / 2 + canvasLeft - flowLeft) / flowW) / zoomVal;
+  var offY = ((canvasH / 2 + canvasTop - flowTop) / flowH) / zoomVal;
+  return [offX, offY];
+}
+
 
 // flowchart处理
 jsPlumb.ready(function () {
@@ -33,12 +53,14 @@ jsPlumb.ready(function () {
   grid.DebugDraw("#DCDCDC");
   flowChartContaner.width(grid.Width);
   flowChartContaner.height(grid.Height);
-  console.log(-flowChartContaner.width()/2 + canvas.width()/2)
-  flowChartContaner.offset({ left: -flowChartContaner.width()/2 + canvas.width()/2 + canvas.offset().left });
+  var offsetLeft = -flowChartContaner.width() / 2 + canvas.width() / 2 + canvas.offset().left;
+  var offsetTop = canvas.offset().top;
+  flowChartContaner.offset({ left: offsetLeft, top: offsetTop });
+  var zoomVal = getFlowZoomCenter(canvas, flowChartContaner, 1);
   //============================================
   //Initialize JsPlumb
   var instance = flowChartKit.init(contanerId, flowChartKit.Connector.StateMachine);
-  flowChartKit.setZoom(1, [50, 0]);
+  flowChartKit.setZoom(1, zoomVal);
   //============================================
   //处理画布拖动
   canvas.on('mousedown', function (event) {
@@ -51,13 +73,14 @@ jsPlumb.ready(function () {
       pos = Vector.add(pos, diff);
       flowChartContaner.offset({ left: pos.x, top: pos.y });
       old = now;
+      //重置流程图panel的中心点
+      zoomVal = getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
     });
   });
   canvas.on('mouseup', function (event) {
     canvas.off('mousemove');
   });
-  canvas.mouseleave(function(ev)
-  {
+  canvas.mouseleave(function (ev) {
     canvas.off('mousemove');
   });
   //============================================
@@ -77,8 +100,7 @@ jsPlumb.ready(function () {
     // var diff = Vector.mul(new Vector(1, 1 / per), delta)
     // pos = Vector.add(pos, diff);
     // flowChartContaner.offset({left:pos.x, top:pos.y});
-
-    flowChartKit.setZoom(zoom, [0.5, 0])
+    flowChartKit.setZoom(zoom, zoomVal);
     return false;
   });
   //============================================

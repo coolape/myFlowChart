@@ -154,28 +154,33 @@ flowChartKit.newNode = function (id, x, y, name) {
     d.setAttribute("jpNode", id)
     d.innerHTML = "<div class=\"del\" delete-all id=\"" + delBtnID + "\"></div>" + name + "<div class=\"ep\"></div>";
     d.style.position = "absolute";
-    d.style.left = x + "px";
-    d.style.top = y + "px";
+    d.style.left = x+"px";
+    d.style.top = y+"px";
     jsPlumbIns.getContainer().appendChild(d);
 
-    $('#' + id).on('mouseover', function (ev) {
+    var node = $('#' + id)
+    // var left = x// - node.width()/2;
+    // var top = y// - node.height()/2;
+    // node.offset({left:left, top:top});
+
+    node.on('mouseover', function (ev) {
         $('#' + delBtnID).show()
     });
 
-    $('#' + id).on('mouseout', function (ev) {
+    node.on('mouseout', function (ev) {
         $('#' + delBtnID).hide()
     });
 
-    $('#' + id).on('mousedown', function (ev) {
-        $('#' + id).off('mouseover');
-        $('#' + id).on('mousemove', function (ev) {
+    node.on('mousedown', function (ev) {
+        node.off('mouseover');
+        node.on('mousemove', function (ev) {
             $('#' + delBtnID).hide()
         });
     });
 
-    $('#' + id).on('mouseup', function (ev) {
-        $('#' + id).off('mousemove');
-        $('#' + id).on('mouseover', function (ev) {
+    node.on('mouseup', function (ev) {
+        node.off('mousemove');
+        node.on('mouseover', function (ev) {
             $('#' + delBtnID).show()
         });
     });
