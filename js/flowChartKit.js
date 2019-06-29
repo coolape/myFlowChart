@@ -8,6 +8,16 @@ flowChartKit.Connector = {
     Flowchart: "Flowchart",
 }
 
+flowChartKit.CallbackTypes = {
+    onNewNode: "onNewNode",//当创建节点时回调
+    onDeleteNode: "onDeleteNode",//当删除节点时回调
+    onClickNode: "onClickNode",//当点击节点时回调
+    onClickConnection: "onClickConnection",//当点击连接时回调
+    connection: "connection",//当有连接时回调
+    connectionDetached: "connectionDetached",//当连接断开时回调
+    connectionMoved: "connectionMoved",//当连接移开时回调
+}
+
 flowChartKit.activeConnection = null;   // 活动的连接
 flowChartKit.jsPlumbIns = null;   // jsPlumb的实例
 
@@ -17,8 +27,18 @@ flowChartKit.jsPlumbIns = null;   // jsPlumb的实例
  * @for flowChartKit
  * @param {String} containerId 容器id
  * @param {flowChartKit.Connector} connector 连接类型
+ * @param {Object map} callbaks 连接类型
+ * callbaks.onNewNode:当创建节点时回调
+ * callbaks.onDeleteNode:当删除节点时回调
+ * callbaks.onClickNode:当点击节点时回调
+ * callbaks.onClickConnection:当点击连接时回调
+ * callbaks.connection:当有连接时回调
+ * callbaks.connectionDetached:当连接断开时回调
+ * callbaks.connectionMoved:当连接移开时回调
  */
-flowChartKit.init = function (containerId, connector, onClickNode, onClickConnection) {
+flowChartKit.init = function (grid, containerId, connector, callbaks) {
+    flowChartKit.grid = grid;
+    flowChartKit.callbaks = callbaks || {};
     var contaner = $("#" + containerId);
     var color = "#E8C870";
     var jsPlumbIns = jsPlumb.getInstance({
@@ -34,11 +54,11 @@ flowChartKit.init = function (containerId, connector, onClickNode, onClickConnec
                 width: 10,
                 foldback: 0.623
             }],
-            ["Label", {
-                location: 0.75,
-                label: "con", id: "label",
-                cssClass: "aLabel"
-            }],
+            // ["Label", {
+            //     location: 0.75,
+            //     label: "con", id: "label",
+            //     cssClass: "aLabel"
+            // }],
             ["Label", {
                 location: 0.25,
                 label: "x", id: "del_connection",
@@ -67,9 +87,7 @@ flowChartKit.init = function (containerId, connector, onClickNode, onClickConnec
     // happening.
     jsPlumbIns.bind("click", function (c) {
         // jsPlumbIns.deleteConnection(c);
-        if (onClickConnection != null) {
-            onClickConnection(c)
-        }
+        flowChartKit.doCallback(flowChartKit.CallbackTypes.onClickConnection, c);
     });
 
     // bind a connection listener. note that the parameter passed to this function contains more than
@@ -77,20 +95,23 @@ flowChartKit.init = function (containerId, connector, onClickNode, onClickConnec
     // this listener sets the connection's internal
     // id as the label overlay's text.
     jsPlumbIns.bind("connection", function (info) {
-        info.connection.getOverlay("label").setLabel(info.connection.id);
+        // info.connection.getOverlay("label").setLabel(info.connection.id);
         console.log("connection==" + info.connection.id);
         console.log("source==" + info.connection.source.id)
         console.log("target==" + info.connection.target.id)
+        flowChartKit.doCallback(flowChartKit.CallbackTypes.connection, info.connection);
     });
 
     jsPlumbIns.bind("connectionDetached", function (info) {
         // info.connection.getOverlay("label").setLabel(info.connection.id);
         console.log("connectionDetached==" + info.connection.id);
+        flowChartKit.doCallback(flowChartKit.CallbackTypes.connectionDetached, info.connection);
     });
 
     jsPlumbIns.bind("connectionMoved", function (info) {
         // info.connection.getOverlay("label").setLabel(info.connection.id);
         console.log("connectionMoved==" + info.connection.id);
+        flowChartKit.doCallback(flowChartKit.CallbackTypes.connectionMoved, info.connection);
     });
 
     jsPlumbIns.bind("mouseover", function (connection) {
@@ -135,8 +156,13 @@ flowChartKit.init = function (containerId, connector, onClickNode, onClickConnec
  * @param {String} name 节点名
  * @return {Element} 节点
  */
-flowChartKit.newNode = function (id, x, y, name) {
+flowChartKit.newNode = function (id, x, y, name, maxIn, maxOut, allowLoopback) {
     console.log("flowChartKit.newNode ")
+    name = name || "New Node";
+    maxIn = maxIn || -1;
+    maxOut = maxOut || -1;
+    allowLoopback = allowLoopback || false;
+
     var jsPlumbIns = flowChartKit.jsPlumbIns
     var d = document.createElement("div");
     if (id == null) {
@@ -153,11 +179,15 @@ flowChartKit.newNode = function (id, x, y, name) {
     jsPlumbIns.getContainer().appendChild(d);
 
     var node = $('#' + id)
-    var left = x - node.width()/2;
-    var top = y - node.height()/2;
-    d.style.left = left+"px";
-    d.style.top = top+"px";
-    // node.offset({left:left, top:top});
+    var left = x - node.width() / 2;
+    var top = y - node.height() / 2;
+    d.style.left = left + "px";
+    d.style.top = top + "px";
+
+    // 坐标落在gird中
+    var pos = new Vector(node.offset().left, node.offset().top)
+    pos = flowChartKit.grid.GetNearestCellCenter(pos)
+    node.offset({ left: pos.x, top: pos.y });
 
     node.on('mouseover', function (ev) {
         $('#' + delBtnID).show()
@@ -175,13 +205,22 @@ flowChartKit.newNode = function (id, x, y, name) {
     });
 
     node.on('mouseup', function (ev) {
+        // 坐标落在gird中
+        var pos = new Vector(node.offset().left, node.offset().top)
+        pos = flowChartKit.grid.GetNearestCellCenter(pos)
+        node.offset({ left: pos.x, top: pos.y });
+        flowChartKit.jsPlumbIns.revalidate(id); //通知jsPlumb某个元素有变化
         node.off('mousemove');
         node.on('mouseover', function (ev) {
             $('#' + delBtnID).show()
         });
     });
+    node.on("click", function (ev) {
+        flowChartKit.doCallback(flowChartKit.CallbackTypes.onClickNode, d);
+    });
 
-    flowChartKit.initNode(d, -1, -1, false);
+    flowChartKit.initNode(d, maxIn, maxOut, allowLoopback);
+    flowChartKit.doCallback(flowChartKit.CallbackTypes.onNewNode, d);
     return d;
 }
 
@@ -211,7 +250,7 @@ flowChartKit.initNode = function (el, maxIn, maxOut, allowLoopback) {
         },
         maxConnections: maxOut,
         onMaxConnections: function (info, e) {
-            alert("Maximum connections (" + info.maxConnections + ") reached");
+            alert("已经到达最大子节点连接数：" + info.maxConnections + "!");
         }
     });
 
@@ -221,7 +260,7 @@ flowChartKit.initNode = function (el, maxIn, maxOut, allowLoopback) {
         maxConnections: maxIn,
         allowLoopback: allowLoopback,
         onMaxConnections: function (info, e) {
-            alert("Maximum connections (" + info.maxConnections + ") reached");
+            alert("已经到达最大父节点连接数：" + info.maxConnections + "!");
         },
     });
 
@@ -244,6 +283,8 @@ flowChartKit.delNode = function (node) {
     // jsPlumbIns.removeGroup(node, true);
     jsPlumbIns.deleteConnectionsForElement(node)
     jsPlumbIns.remove(node)
+
+    flowChartKit.doCallback(flowChartKit.CallbackTypes.onDeleteNode);
 }
 
 flowChartKit.addPoint = function () {
@@ -276,6 +317,12 @@ flowChartKit.clean = function () {
     flowChartKit.activeConnection = null;
 }
 
+flowChartKit.doCallback = function (callbackType, parmas) {
+    var callback = flowChartKit.callbaks[callbackType];
+    if (callback != null) {
+        callback(parmas);
+    }
+}
 flowChartKit.getZoom = function () {
     return flowChartKit.jsPlumbIns.getZoom();
 }
@@ -306,20 +353,20 @@ flowChartKit.setZoom = function (zoom, transformOrigin, el) {
 };
 
 flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
-    //TODO:
+    //TODO:当拖动了流程图后，重新设置origin后要跳一下，头痛
     return;
     var instance = flowChartKit.jsPlumbIns;
     el = el || instance.getContainer();
 
     //修正坐标
     var zoom = flowChartKit.getZoom();
-    var offsetX = (transformOrigin[0] - oldOrigin[0])/100;
-    var offsetY = (transformOrigin[1] - oldOrigin[1])/100;
+    var offsetX = (transformOrigin[0] - oldOrigin[0]) / 100;
+    var offsetY = (transformOrigin[1] - oldOrigin[1]) / 100;
     console.log(offsetX + "========" + offsetY + "=======" + zoom)
     console.log(parseInt(el.style.width) + "========" + el.style.height)
-    offsetX = offsetX * parseInt(el.style.width)/zoom;
-    offsetY = offsetY * parseInt(el.style.height)/zoom/2;
-    console.log(offsetX )
+    offsetX = offsetX * parseInt(el.style.width) / zoom;
+    offsetY = offsetY * parseInt(el.style.height) / zoom / 2;
+    console.log(offsetX)
     var x = parseFloat(el.style.left);
     var y = parseFloat(el.style.top);
 
@@ -335,8 +382,8 @@ flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
 
 
 
-    el.style.left = (x-offsetX)+"px";
-    el.style.top = (y-offsetY)+"px";
+    el.style.left = (x - offsetX) + "px";
+    el.style.top = (y - offsetY) + "px";
 
 };
 

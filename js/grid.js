@@ -1,5 +1,5 @@
 var Grid = {}
-
+Grid.current = null;
 /**
  * 创建grid实例
  * @method new
@@ -187,7 +187,7 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
             return -1;
         }
 
-        pos = Vector.sub(pos, Origin);
+        pos = Vector.sub(pos, grid.Origin);
         var col = parseInt(pos.x / m_cellSize);
         var row = parseInt(pos.y / m_cellSize);
         return grid.GetCellIndex(col, row);
@@ -443,5 +443,6 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
         return ret;
     }
     grid.init(contanerID, origin, numRows, numCols, cellSize);
+    Grid.current = grid;
     return grid;
 }

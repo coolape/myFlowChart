@@ -17,10 +17,44 @@ function getTreeData() {
 
   return tree;
 }
+
+function offItemsDragDrop() {
+  //Handle drag and drop
+  $('.list-group-item').off('dragstart');
+}
+//重新设置一次列表的拖动
+function onItemsDragDrop(flowChartContaner) {
+  //Handle drag and drop
+  $('.list-group-item').attr('draggable', 'true').on('dragstart', function (ev) {
+    //ev.dataTransfer.setData("text", ev.target.id);
+    ev.originalEvent.dataTransfer.setData('text', ev.target.textContent);
+    // console.log("dragstart")
+    flowChartContaner.on('drop', function (ev) {
+      flowChartContaner.off('drop');
+      //avoid event conlict for jsPlumb
+      if (ev.target.className.indexOf('_jsPlumb') >= 0) {
+        return;
+      }
+
+      ev.preventDefault();
+      var mx = ev.originalEvent.offsetX;
+      var my = ev.originalEvent.offsetY;
+
+      flowChartKit.newNode(null, mx, my, "New Node")
+    }).on('dragover', function (ev) {
+      ev.preventDefault();
+      // console.log('on drag over');
+    });
+  }).on("dragend", function (ev) {
+    // console.log("dragend")
+    flowChartContaner.off('drop');
+  });
+}
+
 /*
 * 取得流程图的每次缩放的中心点
 */
-getFlowZoomCenter = function (canvas, flowPanel, zoomVal) {
+function getFlowZoomCenter(canvas, flowPanel, zoomVal) {
   var canvasLeft = canvas.offset().left;
   var canvasTop = canvas.offset().top;
   var flowLeft = flowPanel.offset().left;
@@ -50,7 +84,7 @@ jsPlumb.ready(function () {
   //============================================
   //设置网格
   var origin = new Vector(canvas.offset().left, canvas.offset().top)
-  var grid = Grid.new(contanerId, origin, 10, 10, 20);
+  var grid = Grid.new(contanerId, origin, 1000, 1000, 20);
   // grid.DebugDraw("#DCDCDC");//TODO:画线还有问题，要影响拖动创建节点的坐标位置，导致位置不正确
   //============================================
   //设置画板的高度位置及缩放
@@ -62,7 +96,23 @@ jsPlumb.ready(function () {
   var zoomCenter = getFlowZoomCenter(canvas, flowChartContaner, 1);
   //============================================
   //Initialize JsPlumb
-  var instance = flowChartKit.init(contanerId, flowChartKit.Connector.StateMachine);
+  var callbacks = {
+    [flowChartKit.CallbackTypes.onNewNode]: function (node) {
+    },
+    [flowChartKit.CallbackTypes.onClickNode]: function (node) {
+    },
+    [flowChartKit.CallbackTypes.onDeleteNode]: function () {
+    },
+    [flowChartKit.CallbackTypes.onClickConnection]: function (connection) {
+    },
+    [flowChartKit.CallbackTypes.connection]: function (connection) {
+    },
+    [flowChartKit.CallbackTypes.connectionDetached]: function (connection) {
+    },
+    [flowChartKit.CallbackTypes.connectionMoved]: function (connection) {
+    },
+  }
+  var instance = flowChartKit.init(grid, contanerId, flowChartKit.Connector.StateMachine, callbacks);
   flowChartKit.setZoom(1, zoomCenter);
   //============================================
   //处理画布拖动
@@ -112,31 +162,7 @@ jsPlumb.ready(function () {
   //============================================
   //Initialize Control Tree View
   $('#control-panel').treeview({ data: getTreeData() });
-
-  //Handle drag and drop
-  $('.list-group-item').attr('draggable', 'true').on('dragstart', function (ev) {
-    //ev.dataTransfer.setData("text", ev.target.id);
-    ev.originalEvent.dataTransfer.setData('text', ev.target.textContent);
-    // console.log('drag start');
-    canvas.on('drop', function (ev) {
-      canvas.off('drop');
-      //avoid event conlict for jsPlumb
-      if (ev.target.className.indexOf('_jsPlumb') >= 0) {
-        return;
-      }
-
-      ev.preventDefault();
-      var mx = ev.originalEvent.offsetX;
-      var my = ev.originalEvent.offsetY;
-
-      flowChartKit.newNode(null, mx, my, "new node")
-    }).on('dragover', function (ev) {
-      ev.preventDefault();
-      // console.log('on drag over');
-    });
-  }).on("dragend", function (ev) {
-    canvas.off('drop');
-  });
+  onItemsDragDrop(flowChartContaner);//TODO:treeveiw 还有问题，当点击了后，dragable就无效了
 
   jsPlumb.fire("jsFlowLoaded", instance);
 
