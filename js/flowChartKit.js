@@ -96,21 +96,21 @@ flowChartKit.init = function (grid, containerId, connector, callbaks) {
     // id as the label overlay's text.
     jsPlumbIns.bind("connection", function (info) {
         // info.connection.getOverlay("label").setLabel(info.connection.id);
-        console.log("connection==" + info.connection.id);
-        console.log("source==" + info.connection.source.id)
-        console.log("target==" + info.connection.target.id)
+        // console.log("connection==" + info.connection.id);
+        // console.log("source==" + info.connection.source.id)
+        // console.log("target==" + info.connection.target.id)
         flowChartKit.doCallback(flowChartKit.CallbackTypes.connection, info.connection);
     });
 
     jsPlumbIns.bind("connectionDetached", function (info) {
         // info.connection.getOverlay("label").setLabel(info.connection.id);
-        console.log("connectionDetached==" + info.connection.id);
+        // console.log("connectionDetached==" + info.connection.id);
         flowChartKit.doCallback(flowChartKit.CallbackTypes.connectionDetached, info.connection);
     });
 
     jsPlumbIns.bind("connectionMoved", function (info) {
         // info.connection.getOverlay("label").setLabel(info.connection.id);
-        console.log("connectionMoved==" + info.connection.id);
+        // console.log("connectionMoved==" + info.connection.id);
         flowChartKit.doCallback(flowChartKit.CallbackTypes.connectionMoved, info.connection);
     });
 
@@ -248,7 +248,6 @@ flowChartKit.initNode = function (el, data) {
     var maxIn = data.maxIn || -1;
     var maxOut = data.maxOut || -1;
     var allowLoopback = data.allowLoopback || false;
-    console.log(data.isSource)
     var isSource = data.isSource == null ? true : data.isSource;
     var isTarget = data.isTarget == null ? true : data.isTarget;
 
@@ -256,7 +255,6 @@ flowChartKit.initNode = function (el, data) {
     jsPlumbIns.draggable(el);
 
     if (isSource && maxOut != 0) {
-        console.log(isSource, maxOut)
         jsPlumbIns.makeSource(el, {
             filter: ".ep",
             anchor: "Continuous",
@@ -368,8 +366,17 @@ flowChartKit.addPoint = function () {
 }
 
 
-flowChartKit.connect = function (source, target, ) {
-
+flowChartKit.connect = function (sourceID, targetID, overlays) {
+    if (overlays != null) {
+        flowChartKit.jsPlumbIns.connect({
+            source: sourceID, target: targetID,
+            overlays: overlays
+        });
+    } else {
+        flowChartKit.jsPlumbIns.connect({
+            source: sourceID, target: targetID
+        });
+    }
 }
 
 /**

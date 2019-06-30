@@ -76,6 +76,27 @@ main.getTreeData = function () {
   return treeData;
 }
 
+main.getTreeDataByCmd = function (treeData, cmd) {
+  for (index in treeData) {
+    var ret = main.eachGetTreeDataByCmd(treeData[index], cmd);
+    if (ret != null) {
+      return ret;
+    }
+  }
+  return null;
+}
+
+main.eachGetTreeDataByCmd = function (treeData, cmd) {
+  if (treeData.cmd != null) {
+    if (treeData.cmd == cmd) {
+      return treeData;
+    }
+  }
+  if (treeData.children != null) {
+    return main.getTreeDataByCmd(treeData.children, cmd);
+  }
+}
+
 /*
 * 取得流程图的每次缩放的中心点
 */
@@ -106,7 +127,12 @@ main.doNewNode = function (x, y, nodeData, assignNodeID) {
 
 //特殊处理的节点
 main.specNewNode = function (x, y, nodeData) {
-
+  flowChartKit.jsPlumbIns.batch(function () {
+    var node1 = flowChartKit.newNode(x, y, nodeData);
+    var node2 = flowChartKit.newListNode(x + 100, y-50,
+      main.getTreeDataByCmd(main.getTreeData(), 999));
+    flowChartKit.connect(node1, node2);
+  });
 }
 
 // flowchart处理
