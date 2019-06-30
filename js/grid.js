@@ -21,6 +21,7 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
     var m_numberOfRows = 10;
     var m_numberOfColumns = 10;
     var m_cellSize = 1;
+    var originCellSize = 1;
     var m_origin = new Vector(0, 0);
 
     grid.Rows = null;
@@ -58,7 +59,7 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
         }
         var top = from.y;
         var left = from.x;
-        var content = '<div style="z-index:-12;width:' + width + 'px;height:' + height + 'px; background:' + color + ';position:absolute;top:' + top + 'px;left:' + left + 'px;"></div>';
+        var content = '<div style="z-index:0;width:' + width + 'px;height:' + height + 'px; background:' + color + ';position:absolute;top:' + top + 'px;left:' + left + 'px;"></div>';
         var le = grid.Contaner.append(content);
         return le;
     }
@@ -78,6 +79,7 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
         // var origin = new Vector(contaner.offset().left, contaner.offset().top);
         // m_origin = new Vector(0,0);// origin;
         // m_origin = origin;
+        originCellSize = cellSize;
         m_numberOfRows = numRows;
         m_numberOfColumns = numCols;
         m_cellSize = cellSize;
@@ -96,6 +98,10 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
         grid.Bottom = grid.Origin.y;
     }
 
+    grid.zoom = function (zoomVal) {
+        grid.CellSize = originCellSize * zoomVal;
+        m_cellSize = originCellSize * zoomVal;
+    }
     /**
      * 画网格
      * @method DrawLine

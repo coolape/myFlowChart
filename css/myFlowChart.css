@@ -1,7 +1,7 @@
 
 .flowchart-canvas {    
     border:1px solid #CCC;
-    background-color:white;
+    background-color:whitesmoke;
     display: flex;
     position:relative;
 
@@ -19,7 +19,7 @@
 
 .flowchart-panel {    
     border:1px solid black;
-    background-color:whitesmoke;
+    background-color:white;
 }
 
 .group-container {
@@ -253,6 +253,40 @@
 
 .dragHover {
     border: 2px solid orange;
+}
+
+.list {
+    border: 1px solid #ccc;
+    /* width: 200px;
+    position:absolute; */
+    padding:10px;
+
+}
+
+.list ul {
+    max-height:250px;
+    overflow:auto;
+    margin:0;
+    padding:0;
+}
+
+.list li {
+    cursor: pointer;
+    background-color: #fff1c6;
+    margin-bottom:5px;
+}
+
+.jtk-drag-active {
+    background-color:#cbeae1 !important;
+}
+
+.jtk-drag-hover {
+    background-color:#5c96bc !important;
+    color:white;
+}
+
+[jtk-scrollable-list] {
+    position:relative;
 }
 
 path, .jtk-endpoint { cursor:pointer; }

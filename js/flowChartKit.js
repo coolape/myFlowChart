@@ -137,7 +137,7 @@ flowChartKit.init = function (grid, containerId, connector, callbaks) {
     // bind a double click listener to "contaner"; add new node when this occurs.
     /*
     jsPlumb.on(contaner, "dblclick", function (e) {
-        flowChartKit.newNode(null, e.offsetX, e.offsetY, "New Node");
+        flowChartKit.newNode(e.offsetX, e.offsetY, {name,"New Node"});
     });
     */
 
@@ -156,23 +156,32 @@ flowChartKit.init = function (grid, containerId, connector, callbaks) {
  * @param {String} name 节点名
  * @return {Element} 节点
  */
-flowChartKit.newNode = function (id, x, y, name, maxIn, maxOut, allowLoopback) {
-    console.log("flowChartKit.newNode ")
-    name = name || "New Node";
-    maxIn = maxIn || -1;
-    maxOut = maxOut || -1;
-    allowLoopback = allowLoopback || false;
+flowChartKit.newNode = function (x, y, data, assignNodeID) {
+    var d = flowChartKit._createNode(x, y, data, assignNodeID);
+    flowChartKit.doCallback(flowChartKit.CallbackTypes.onNewNode, { node: d, data: data });
+    return d
+}
+
+flowChartKit._createNode = function (x, y, data, assignNodeID) {
+    var name = data.name || "New Node";
+    var maxIn = data.maxIn || -1;
+    var maxOut = data.maxOut || -1;
+    var allowLoopback = data.allowLoopback || false;
+    var isSource = data.isSource == null ? true : data.isSource;
+    var isTarget = data.isTarget == null ? true : data.isTarget;
 
     var jsPlumbIns = flowChartKit.jsPlumbIns
     var d = document.createElement("div");
-    if (id == null) {
-        id = jsPlumbUtil.uuid();
-    }
+    var id = assignNodeID || jsPlumbUtil.uuid();
     var delBtnID = "del_" + id
     d.className = "w";
     d.id = id;
     d.setAttribute("jpNode", id)
-    d.innerHTML = "<div class=\"del\" delete-all id=\"" + delBtnID + "\"></div>" + name + "<div class=\"ep\"></div>";
+    var innerHTML = "<div class=\"del\" delete-all id=\"" + delBtnID + "\"></div>" + name;
+    if (isSource) {
+        innerHTML += "<div class=\"ep\"></div>";
+    }
+    d.innerHTML = innerHTML;
     d.style.position = "absolute";
     // d.style.left = x+"px";
     // d.style.top = y+"px";
@@ -205,9 +214,9 @@ flowChartKit.newNode = function (id, x, y, name, maxIn, maxOut, allowLoopback) {
     });
 
     node.on('mouseup', function (ev) {
-        // 坐标落在gird中
+        // 坐标落在grid中
         var pos = new Vector(node.offset().left, node.offset().top)
-        pos = flowChartKit.grid.GetNearestCellCenter(pos)
+        pos = flowChartKit.grid.GetNearestCellCenter(pos);
         node.offset({ left: pos.x, top: pos.y });
         flowChartKit.jsPlumbIns.revalidate(id); //通知jsPlumb某个元素有变化
         node.off('mousemove');
@@ -216,11 +225,10 @@ flowChartKit.newNode = function (id, x, y, name, maxIn, maxOut, allowLoopback) {
         });
     });
     node.on("click", function (ev) {
-        flowChartKit.doCallback(flowChartKit.CallbackTypes.onClickNode, d);
+        flowChartKit.doCallback(flowChartKit.CallbackTypes.onClickNode, { node: d, data: data });
     });
 
-    flowChartKit.initNode(d, maxIn, maxOut, allowLoopback);
-    flowChartKit.doCallback(flowChartKit.CallbackTypes.onNewNode, d);
+    d = flowChartKit.initNode(d, data);
     return d;
 }
 
@@ -235,34 +243,46 @@ flowChartKit.newNode = function (id, x, y, name, maxIn, maxOut, allowLoopback) {
  * @param {bool} allowLoopback 是否可以自己连接自己
  * @return {Element} 节点
  */
-flowChartKit.initNode = function (el, maxIn, maxOut, allowLoopback) {
+flowChartKit.initNode = function (el, data) {
     var jsPlumbIns = flowChartKit.jsPlumbIns
+    var maxIn = data.maxIn || -1;
+    var maxOut = data.maxOut || -1;
+    var allowLoopback = data.allowLoopback || false;
+    console.log(data.isSource)
+    var isSource = data.isSource == null ? true : data.isSource;
+    var isTarget = data.isTarget == null ? true : data.isTarget;
+
     // initialise draggable elements.
     jsPlumbIns.draggable(el);
 
-    jsPlumbIns.makeSource(el, {
-        filter: ".ep",
-        anchor: "Continuous",
-        connectorStyle: { stroke: "#5c96bc", strokeWidth: 2, outlineStroke: "transparent", outlineWidth: 4 },
-        connectionType: "basic",
-        extract: {
-            "action": "the-action"
-        },
-        maxConnections: maxOut,
-        onMaxConnections: function (info, e) {
-            alert("已经到达最大子节点连接数：" + info.maxConnections + "!");
-        }
-    });
-
-    jsPlumbIns.makeTarget(el, {
-        dropOptions: { hoverClass: "dragHover" },
-        anchor: "Continuous",
-        maxConnections: maxIn,
-        allowLoopback: allowLoopback,
-        onMaxConnections: function (info, e) {
-            alert("已经到达最大父节点连接数：" + info.maxConnections + "!");
-        },
-    });
+    if (isSource && maxOut != 0) {
+        console.log(isSource, maxOut)
+        jsPlumbIns.makeSource(el, {
+            filter: ".ep",
+            anchor: "Continuous",
+            allowLoopback: allowLoopback,
+            connectorStyle: { stroke: "#5c96bc", strokeWidth: 2, outlineStroke: "transparent", outlineWidth: 4 },
+            connectionType: "basic",
+            extract: {
+                "action": "the-action"
+            },
+            maxConnections: maxOut,
+            onMaxConnections: function (info, e) {
+                alert("已经到达最大子节点连接数：" + info.maxConnections + "!");
+            }
+        });
+    }
+    if (isTarget && maxIn != 0) {
+        jsPlumbIns.makeTarget(el, {
+            dropOptions: { hoverClass: "dragHover" },
+            anchor: "Continuous",
+            maxConnections: maxIn,
+            allowLoopback: allowLoopback,
+            onMaxConnections: function (info, e) {
+                alert("已经到达最大父节点连接数：" + info.maxConnections + "!");
+            },
+        });
+    }
 
     // this is not part of the core demo functionality; it is a means for the Toolkit edition's wrapped
     // version of this demo to find out about new nodes being added.
@@ -279,19 +299,76 @@ flowChartKit.initNode = function (el, maxIn, maxOut, allowLoopback) {
  * @param {Element} node Element对象
  */
 flowChartKit.delNode = function (node) {
+    var nodeId = node.id
     var jsPlumbIns = flowChartKit.jsPlumbIns
     // jsPlumbIns.removeGroup(node, true);
     jsPlumbIns.deleteConnectionsForElement(node)
     jsPlumbIns.remove(node)
 
-    flowChartKit.doCallback(flowChartKit.CallbackTypes.onDeleteNode);
+    flowChartKit.doCallback(flowChartKit.CallbackTypes.onDeleteNode, { nodeID: nodeId });
 }
+
+flowChartKit.newListNode = function (
+    x, y, data, assignNodeID) {
+    var dataList = data.list;
+    var name = data.name || "New Node";
+
+    var instance = flowChartKit.jsPlumbIns;
+    var node = flowChartKit._createNode(x, y, data, assignNodeID);
+
+    var jqNode = $("#" + node.id);
+    var listId = "list_" + node.id;
+    jqNode.attr("listNode", true);
+    var listHtml = "<div class=\"list list-lhs\" >";
+    listHtml += "<ul id=\"" + listId + "\">"
+
+    for (i = 0; i < dataList.length; i++) {
+        listHtml += "<li dataIndex=\"" + i + "\">" + dataList[i].name + "</li>";
+    }
+    listHtml += "</ui></div>";
+    jqNode.append(listHtml);
+
+    instance.batch(function () {
+        // configure items
+        var items = node.querySelectorAll("li");
+        for (var i = 0; i < items.length; i++) {
+            var dataIndex = parseInt(items[i].getAttribute("dataIndex"));
+            var subData = dataList[dataIndex];
+            var maxIn = subData.maxIn || -1;
+            var maxOut = subData.maxOut || -1;
+            var allowLoopback = subData.allowLoopback || false;
+            var isSource = subData.isSource == null ? true : subData.isSource;
+            var isTarget = subData.isTarget == null ? true : subData.isTarget;
+
+            if (isSource) {
+                instance.makeSource(items[i], {
+                    allowLoopback: allowLoopback,
+                    maxConnections: maxOut,
+                    anchor: ["Left", "Right"]
+                });
+            }
+
+            if (isTarget) {
+                instance.makeTarget(items[i], {
+                    allowLoopback: allowLoopback,
+                    maxConnections: maxIn,
+                    anchor: ["Left", "Right"]
+                });
+            }
+        }
+    });
+    var nodes = instance.addList(document.querySelector("#" + listId));
+    flowChartKit.doCallback(flowChartKit.CallbackTypes.onNewNode, { node: node, data: data });
+    return node;
+}
+
 
 flowChartKit.addPoint = function () {
 
 }
 
-flowChartKit.connect = function () {
+
+flowChartKit.connect = function (source, target, ) {
 
 }
 
@@ -350,6 +427,7 @@ flowChartKit.setZoom = function (zoom, transformOrigin, el) {
     el.style["transform"] = s;
 
     instance.setZoom(zoom);
+    flowChartKit.grid.zoom(zoom);
 };
 
 flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {

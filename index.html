@@ -9,7 +9,8 @@
   <meta name="author" content="Gang Tao">
 
   <link rel="stylesheet" type="text/css" href="./css/bootstrap.min.css" />
-  <link rel="stylesheet" type="text/css" href="./css/bootstrap-treeview.min.css" />
+  <!--link rel="stylesheet" type="text/css" href="./css/bootstrap-treeview.min.css"/-->
+  <link rel="stylesheet" type="text/css" href="./plugins/mbraak-jqTree/jqtree.css" />
   <link rel="stylesheet" type="text/css" href="./plugins/jsplumb-master/css/jsplumb.css" />
   <link rel="stylesheet" type="text/css" href="./plugins/jsplumb-master/css/jsplumbtoolkit-demo.css">
   <link rel="stylesheet" type="text/css" href="./plugins/jsplumb-master/css/main.css" />
@@ -33,9 +34,9 @@
 </head>
 
 <body>
-  <div class="flow-fluid">
+  <div class="flow-fluid" >
     <div class="row">
-      <div class="col-md-2">
+      <div class="col-md-2" style="z-index: 10;">
         <div class="panel panel-default" style="margin:2px;height:400px">
           <div class="panel-body">
             <div id="control-panel">
@@ -43,15 +44,15 @@
           </div>
         </div>
       </div>
-      <div class="col-md-7" style="height:400px">
+      <div class="col-md-7" style="height:400px;z-index: 0">
         <div class="panel panel-default" style="margin:2px;height:400px">
           <div class="flowchart-canvas canvas-nopan" style="height:400px" id="flow-canvas">
-            <div id="flow-panel" class="flowchart-panel" style="position:absolute;width:100%;height:100%;">
+            <div id="flow-panel" class="flowchart-panel" style="position:absolute;width:100%;height:100%;z-index:1;">
             </div>
           </div>
         </div>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-3" style="z-index: 10;">
         <div class="panel panel-default" style="margin:2px;height:400px">
           <div class="panel-body">
             Data Preview
@@ -71,8 +72,9 @@
   <script type="text/javascript" src="./libs/jquery-1.11.1.min.js"></script>
   <script type="text/javascript" src="./libs/jquery-ui-1.9.2.min.js"></script>
   <script type="text/javascript" src="./plugins/jquery-mousewheel-3.1.13/jquery.mousewheel.min.js"></script>
-  <script type="text/javascript" src="./libs/bootstrap.min.js"></script>
-  <script type="text/javascript" src="./libs/bootstrap-treeview.min.js"></script>
+  <script type="text/javascript" src="./plugins/mbraak-jqTree/build/tree.jquery.js"></script>
+  <!--script type="text/javascript" src="./libs/bootstrap.min.js"></script>
+  <script type="text/javascript" src="./libs/bootstrap-treeview.min.js"></script -->
   <script type="text/javascript" src="./libs/json2.js"></script>
 
   <script type="text/javascript" src="./plugins/js-vector-master/js/vector.js"></script>
@@ -80,6 +82,7 @@
 
   <script type="text/javascript" src="./js/flowChartKit.js"></script>
   <script type="text/javascript" src="./js/Grid.js"></script>
+  <script type="text/javascript" src="./js/myDataProc.js"></script>
   <script type="text/javascript" src="./js/main.js"></script>
 </body>
 

@@ -1,60 +1,85 @@
+var main = {}
+/* 节点的配置说明
+maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
+maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
+isSource: true,//可作为连接的来源，默认为true
+isTarget: true,//可作为连接的目标，默认为true
+allowLoopback: false, //是否可以自己连自己，默认为false
+list:[]//里面也是节点的配置
+*/
+var treeData = [
+  {
+    name: "IVR流程",
+    isParentNode: true,
+    id: 1,
+    children: [
+      {
+        id: 2,
+        cmd: 1,
+        name: "播放录音",
+        maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
+        maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
+        isSource: true,//可作为连接的来源，默认为true
+        isTarget: true,//可作为连接的目标，默认为true
+        allowLoopback: false, //是否可以自己连自己，默认为false
+      },
+      {
+        id: 3,
+        cmd: 2,
+        name: "重听",
+        maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
+        maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
+      },
+      {
+        id: 4,
+        cmd: 3,
+        name: "返回上一层",
+        maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
+        maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
+      },
+      {
+        id: 5,
+        cmd: 4,
+        name: "转人工",
+        maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
+        maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
+      },
+      {
+        id: 5,
+        cmd: 999,
+        name: "按键",
+        maxIn: 1,
+        maxOut: 0,
+        isSource: false,
+        isTarget: true,
+        list: [
+          { name: "键1", cmd: 1010, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+          { name: "键2", cmd: 1011, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+          { name: "键3", cmd: 1011, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+          { name: "键4", cmd: 1011, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+          { name: "键5", cmd: 1011, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+          { name: "键6", cmd: 1011, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+          { name: "键7", cmd: 1011, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+          { name: "键8", cmd: 1011, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+          { name: "键9", cmd: 1011, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+          { name: "键0", cmd: 1019, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+          { name: "键#", cmd: 1020, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+          { name: "键*", cmd: 1021, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
+        ],
+      },
+    ]
+  }
+];
 
 //树的数据
-function getTreeData() {
-  var tree = [
-    {
-      text: "Nodes",
-      nodes: [
-        {
-          text: "Node1",
-        },
-        {
-          text: "Node2"
-        }
-      ]
-    }
-  ];
-
-  return tree;
-}
-
-function offItemsDragDrop() {
-  //Handle drag and drop
-  $('.list-group-item').off('dragstart');
-}
-//重新设置一次列表的拖动
-function onItemsDragDrop(flowChartContaner) {
-  //Handle drag and drop
-  $('.list-group-item').attr('draggable', 'true').on('dragstart', function (ev) {
-    //ev.dataTransfer.setData("text", ev.target.id);
-    ev.originalEvent.dataTransfer.setData('text', ev.target.textContent);
-    // console.log("dragstart")
-    flowChartContaner.on('drop', function (ev) {
-      flowChartContaner.off('drop');
-      //avoid event conlict for jsPlumb
-      if (ev.target.className.indexOf('_jsPlumb') >= 0) {
-        return;
-      }
-
-      ev.preventDefault();
-      var mx = ev.originalEvent.offsetX;
-      var my = ev.originalEvent.offsetY;
-
-      flowChartKit.newNode(null, mx, my, "New Node")
-    }).on('dragover', function (ev) {
-      ev.preventDefault();
-      // console.log('on drag over');
-    });
-  }).on("dragend", function (ev) {
-    // console.log("dragend")
-    flowChartContaner.off('drop');
-  });
+main.getTreeData = function () {
+  return treeData;
 }
 
 /*
 * 取得流程图的每次缩放的中心点
 */
-function getFlowZoomCenter(canvas, flowPanel, zoomVal) {
+main.getFlowZoomCenter = function (canvas, flowPanel, zoomVal) {
   var canvasLeft = canvas.offset().left;
   var canvasTop = canvas.offset().top;
   var flowLeft = flowPanel.offset().left;
@@ -71,6 +96,18 @@ function getFlowZoomCenter(canvas, flowPanel, zoomVal) {
   return [offX, offY];
 }
 
+main.doNewNode = function (x, y, nodeData, assignNodeID) {
+  if (nodeData.list != null) {
+    flowChartKit.newListNode(x, y, nodeData, assignNodeID);
+  } else {
+    flowChartKit.newNode(x, y, nodeData, assignNodeID);
+  }
+}
+
+//特殊处理的节点
+main.specNewNode = function (x, y, nodeData) {
+
+}
 
 // flowchart处理
 jsPlumb.ready(function () {
@@ -85,34 +122,18 @@ jsPlumb.ready(function () {
   //设置网格
   var origin = new Vector(canvas.offset().left, canvas.offset().top)
   var grid = Grid.new(contanerId, origin, 1000, 1000, 20);
-  // grid.DebugDraw("#DCDCDC");//TODO:画线还有问题，要影响拖动创建节点的坐标位置，导致位置不正确
+  // grid.DebugDraw("#DCDCDC");//TODO:画线还有问题，影响性，且还要影响拖动创建节点的坐标位置，导致位置不正确
   //============================================
   //设置画板的高度位置及缩放
   flowChartContaner.width(grid.Width);
   flowChartContaner.height(grid.Height);
   var offsetLeft = -flowChartContaner.width() / 2 + canvas.width() / 2 + canvas.offset().left;
-  var offsetTop = canvas.offset().top;
+  var offsetTop = -flowChartContaner.height() / 2 + canvas.height() / 2 + canvas.offset().top;
   flowChartContaner.offset({ left: offsetLeft, top: offsetTop });
-  var zoomCenter = getFlowZoomCenter(canvas, flowChartContaner, 1);
+  var zoomCenter = main.getFlowZoomCenter(canvas, flowChartContaner, 1);
   //============================================
   //Initialize JsPlumb
-  var callbacks = {
-    [flowChartKit.CallbackTypes.onNewNode]: function (node) {
-    },
-    [flowChartKit.CallbackTypes.onClickNode]: function (node) {
-    },
-    [flowChartKit.CallbackTypes.onDeleteNode]: function () {
-    },
-    [flowChartKit.CallbackTypes.onClickConnection]: function (connection) {
-    },
-    [flowChartKit.CallbackTypes.connection]: function (connection) {
-    },
-    [flowChartKit.CallbackTypes.connectionDetached]: function (connection) {
-    },
-    [flowChartKit.CallbackTypes.connectionMoved]: function (connection) {
-    },
-  }
-  var instance = flowChartKit.init(grid, contanerId, flowChartKit.Connector.StateMachine, callbacks);
+  var instance = flowChartKit.init(grid, contanerId, flowChartKit.Connector.StateMachine, myDataProc);
   flowChartKit.setZoom(1, zoomCenter);
   //============================================
   //处理画布拖动
@@ -134,7 +155,7 @@ jsPlumb.ready(function () {
     canvas.off('mousemove');
     //重置流程图panel的中心点
     var old = zoomCenter
-    zoomCenter = getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
+    zoomCenter = main.getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
     flowChartKit.setZoomCenter(zoomCenter, old);
   });
   canvas.mouseleave(function (ev) {
@@ -142,7 +163,7 @@ jsPlumb.ready(function () {
     canvas.off('mousemove');
     //重置流程图panel的中心点
     var old = zoomCenter
-    zoomCenter = getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
+    zoomCenter = main.getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
     flowChartKit.setZoomCenter(zoomCenter, old);
   });
   //============================================
@@ -161,8 +182,53 @@ jsPlumb.ready(function () {
   });
   //============================================
   //Initialize Control Tree View
-  $('#control-panel').treeview({ data: getTreeData() });
-  onItemsDragDrop(flowChartContaner);//TODO:treeveiw 还有问题，当点击了后，dragable就无效了
+  var isOverFlowChartCanvas = function (e) {
+    var targetCollisionDiv = canvas;
+    return (
+      e.pageX > targetCollisionDiv.offset().left &&
+      e.pageX <
+      targetCollisionDiv.offset().left +
+      targetCollisionDiv.width() &&
+      e.pageY > targetCollisionDiv.offset().top &&
+      e.pageY <
+      targetCollisionDiv.offset().top + targetCollisionDiv.height()
+    );
+  }
+
+  var isDragingTreeNode = false;
+  $(function () {
+    $('#control-panel').tree({
+      data: main.getTreeData(),
+      autoOpen: true,
+      dragAndDrop: true,
+      onCanMove: function (node) {
+        return !node.isParentNode;
+      },
+      onCanMoveTo: function (moved_node, target_node, position) {
+        //返回false后，就不能拖动改变tree的位置了
+        return false;
+      },
+      onDragMove: function (node, event) {
+        // flowChartContaner.trigger("mouseover", event);
+        if (!isDragingTreeNode) {
+          //drag start
+        }
+        isDragingTreeNode = true;
+      },
+      onDragStop: function (node, event) {
+        isDragingTreeNode = false;
+        if (isOverFlowChartCanvas(event)) {
+          var mx = (event.pageX - flowChartContaner.offset().left) / flowChartKit.getZoom();
+          var my = (event.pageY - flowChartContaner.offset().top) / flowChartKit.getZoom();
+          if (node.cmd == 1) {
+            main.specNewNode(mx, my, node);
+          } else {
+            main.doNewNode(mx, my, node);
+          }
+        }
+      },
+    });
+  });
 
   jsPlumb.fire("jsFlowLoaded", instance);
 
