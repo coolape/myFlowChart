@@ -149,6 +149,9 @@ main.getCallbacks4Logic = function () {
       var nodeId = node.id;
       if (nodeData.list != null) {
         //说明是节点组
+        $("#panel-fields").append("新建了节点组：" + nodeData.name + "<br>")
+      } else {
+        $("#panel-fields").append("新建了节点：" + nodeData.name + "<br>")
       }
     },
 
@@ -163,15 +166,19 @@ main.getCallbacks4Logic = function () {
     },
     [flowChartKit.CallbackTypes.onDeleteNode]: function (params) {
       var deletedId = params.nodeID;
+      $("#panel-fields").append("删除了节点：" + deletedId + "<br>")
     },
     [flowChartKit.CallbackTypes.onClickConnection]: function (connection) {
       $("#panel-fields").append("点击了连接：" + connection.id + "<br>")
     },
     [flowChartKit.CallbackTypes.connection]: function (connection) {
+      $("#panel-fields").append("新的连接：" + connection.id + "<br>")
     },
     [flowChartKit.CallbackTypes.connectionDetached]: function (connection) {
+      $("#panel-fields").append("连接断开：" + connection.id + "<br>")
     },
     [flowChartKit.CallbackTypes.connectionMoved]: function (connection) {
+      $("#panel-fields").append("连接moved：" + connection.id + "<br>")
     },
   }
 }
