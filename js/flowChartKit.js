@@ -484,13 +484,10 @@ flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
 
     //修正坐标
     var zoom = flowChartKit.getZoom();
-    var offsetX = (transformOrigin[0] - oldOrigin[0]) / 100;
-    var offsetY = (transformOrigin[1] - oldOrigin[1]) / 100;
-    // console.log(offsetX + "========" + offsetY + "=======" + zoom)
-    // console.log(parseInt(el.style.width) + "========" + el.style.height)
-    offsetX = offsetX * parseInt(el.style.width) * zoom;
-    offsetY = offsetY * parseInt(el.style.height) * zoom;
-    // console.log(offsetX)
+    var offsetX = (transformOrigin[0] - oldOrigin[0]);
+    var offsetY = (transformOrigin[1] - oldOrigin[1]);
+    offsetX = offsetX * parseInt(el.style.width) * (zoom-1);
+    offsetY = offsetY * parseInt(el.style.height) * (zoom-1);
     var x = parseFloat(el.style.left);
     var y = parseFloat(el.style.top);
 
@@ -504,9 +501,9 @@ flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
 
     el.style["transformOrigin"] = oString;
 
-
-    el.style.left = (x - offsetX) + "px";
-    el.style.top = (y - offsetY) + "px";
+    //修正坐标
+    el.style.left = (x + offsetX) + "px";
+    el.style.top = (y + offsetY) + "px";
 
 };
 

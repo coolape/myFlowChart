@@ -197,10 +197,8 @@ jsPlumb.ready(function () {
   //============================================
   //设置网格
   var origin = new Vector(canvas.offset().left, canvas.offset().top)
-  // var grid = Grid.new(contanerId, origin, 1000, 1000, 20);
-  // grid.DebugDraw("#DCDCDC", 400, 400, 50);//TODO:画线还有问题，影响性，且还要影响拖动创建节点的坐标位置，导致位置不正确
-  var grid = Grid.new(contanerId, origin, 10, 10, 20);
-  grid.DebugDraw("#DCDCDC");//TODO:画线还有问题，影响性，且还要影响拖动创建节点的坐标位置，导致位置不正确
+  var grid = Grid.new(contanerId, origin, 1000, 1000, 20);
+  grid.DebugDraw("#DCDCDC", 400, 400, 50);//TODO:画线还有问题，影响性，且还要影响拖动创建节点的坐标位置，导致位置不正确
   //============================================
   //设置画板的高度位置及缩放
   flowChartContaner.width(grid.Width);
@@ -214,7 +212,7 @@ jsPlumb.ready(function () {
   var instance = flowChartKit.init(grid, contanerId,
     flowChartKit.Connector.StateMachine,
     [myDataProc, main.getCallbacks4Logic()]);
-  flowChartKit.setZoom(2, zoomCenter);
+  flowChartKit.setZoom(1, zoomCenter);
   //============================================
   //处理画布拖动
   canvas.on('mousedown', function (event) {
@@ -222,8 +220,6 @@ jsPlumb.ready(function () {
     canvas.on('mousemove', function (ev) {
       var now = new Vector(ev.pageX, ev.pageY);
       var diff = Vector.sub(now, old);
-      // diff = Vector.mul(diff, 1/flowChartKit.getZoom())
-      // console.log(diff)
       var pos = new Vector(flowChartContaner.offset().left, flowChartContaner.offset().top);
       pos = Vector.add(pos, diff);
       flowChartContaner.offset({ left: pos.x, top: pos.y });
@@ -237,7 +233,7 @@ jsPlumb.ready(function () {
     //重置流程图panel的中心点
     var old = zoomCenter
     zoomCenter = main.getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
-    // flowChartKit.setZoomCenter(zoomCenter, old);
+    flowChartKit.setZoomCenter(zoomCenter, old);
   });
   canvas.mouseleave(function (ev) {
     //要先关mousemove
@@ -245,7 +241,7 @@ jsPlumb.ready(function () {
     //重置流程图panel的中心点
     var old = zoomCenter
     zoomCenter = main.getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
-    // flowChartKit.setZoomCenter(zoomCenter, old);
+    flowChartKit.setZoomCenter(zoomCenter, old);
   });
   //============================================
   //处理画布缩放
@@ -321,6 +317,6 @@ jsPlumb.ready(function () {
 
   $("#testbutton").on("click", function () {
 
-    flowChartKit.setZoomCenter([0.1, 0.3], [0,0]);
+    flowChartKit.setZoomCenter([0.1, 0.3], [0.5,0.5]);
   });
 });
