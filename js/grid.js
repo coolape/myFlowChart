@@ -108,21 +108,24 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
      * @for grid
      * @param {Color} color 颜色
      */
-    grid.DebugDraw = function (color) {
-        var width = grid.Width;
-        var height = grid.Height;
+    grid.DebugDraw = function (color, numRows, numCols, cellSize) {
+        numRows = numRows || grid.Rows;
+        numCols = numCols || grid.Cols;
+        cellSize = cellSize || grid.CellSize
+        var width = numCols * cellSize;
+        var height = numRows * cellSize;
 
         // Draw the horizontal grid lines
-        for (i = 0; i < m_numberOfRows + 1; i++) {
-            var startPos = Vector.add(grid.Origin, Vector.mul(kZAxis, i * grid.CellSize));
+        for (i = 0; i < numRows + 1; i++) {
+            var startPos = Vector.add(grid.Origin, Vector.mul(kZAxis, i * cellSize));
             var endPos = Vector.add(startPos, Vector.mul(kXAxis, width));
             grid.lines.push(DrawLine(startPos, endPos, color))
         }
 
         // Draw the vertial grid lines
-        for (i = 0; i < m_numberOfColumns + 1; i++) {
+        for (i = 0; i < numCols + 1; i++) {
             // var startPos = origin + i * cellSize * kXAxis;
-            var startPos = Vector.add(grid.Origin, Vector.mul(kXAxis, i * grid.CellSize));
+            var startPos = Vector.add(grid.Origin, Vector.mul(kXAxis, i * cellSize));
             var endPos = Vector.add(startPos, Vector.mul(kZAxis, height));
             grid.lines.push(DrawLine(startPos, endPos, color))
         }

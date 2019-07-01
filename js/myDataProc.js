@@ -4,7 +4,7 @@ var myDataProc = {
         var node = params.node;
         var nodeData = params.data;
         var nodeId = node.id;
-        if(nodeData.list != null) {
+        if (nodeData.list != null) {
             //说明是节点组
         }
         console.log(flowChartKit.CallbackTypes.onNewNode + "==" + nodeId);
@@ -14,6 +14,10 @@ var myDataProc = {
         var node = params.node;
         var nodeData = params.data;
         var nodeId = node.id;
+        if (nodeData.list != null) {
+            //说明是节点组
+        }
+
         console.log(flowChartKit.CallbackTypes.onClickNode + "==" + nodeId);
     },
     [flowChartKit.CallbackTypes.onDeleteNode]: function (params) {

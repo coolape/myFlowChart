@@ -8,6 +8,7 @@ flowChartKit.Connector = {
     Flowchart: "Flowchart",
 }
 
+//回调函数类型
 flowChartKit.CallbackTypes = {
     onNewNode: "onNewNode",//当创建节点时回调
     onDeleteNode: "onDeleteNode",//当删除节点时回调
@@ -27,7 +28,7 @@ flowChartKit.jsPlumbIns = null;   // jsPlumb的实例
  * @for flowChartKit
  * @param {String} containerId 容器id
  * @param {flowChartKit.Connector} connector 连接类型
- * @param {Object map} callbaks 连接类型
+ * @param {Array} callbaksArray callbaks数组连接类型
  * callbaks.onNewNode:当创建节点时回调
  * callbaks.onDeleteNode:当删除节点时回调
  * callbaks.onClickNode:当点击节点时回调
@@ -36,11 +37,11 @@ flowChartKit.jsPlumbIns = null;   // jsPlumb的实例
  * callbaks.connectionDetached:当连接断开时回调
  * callbaks.connectionMoved:当连接移开时回调
  */
-flowChartKit.init = function (grid, containerId, connector, callbaks) {
+flowChartKit.init = function (grid, containerId, connector, callbaksArray) {
     flowChartKit.grid = grid;
-    flowChartKit.callbaks = callbaks || {};
+    flowChartKit.callbaksArray = callbaksArray || [];
     var contaner = $("#" + containerId);
-    var color = "#E8C870";
+    flowChartKit.lineColor = "#5c96bc";
     var jsPlumbIns = jsPlumb.getInstance({
         Endpoint: ["Dot", { radius: 5 }],
         EndpointStyle: { fill: "#ffa500" },
@@ -145,15 +146,27 @@ flowChartKit.init = function (grid, containerId, connector, callbaks) {
     return jsPlumbIns;
 }
 
+flowChartKit.importDefaults = function (cfg) {
+    flowChartKit.jsPlumbIns.importDefaults(cfg);
+}
+
 /**
  * 新建节点
  * @method newNode
  * @for flowChartKit
- * @param {jsPlumb} jsPlumbIns jsPlumb的实例
- * @param {Element} el Element对象
  * @param {int} x 位置
  * @param {int} y 位置
- * @param {String} name 节点名
+ * @param {Object} data 节点数据信息，详细信息如下
+ * 节点的配置说明:
+ * maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
+ * maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
+ * isSource: true,//可作为连接的来源，默认为true
+ * isTarget: true,//可作为连接的目标，默认为true
+ * sourceAnchor: 作为来源时连线的锚点，详细参见jsplumb的说明，默认Continuous
+ * targetAnchor: 作为目标时连线的锚点，详细参见jsplumb的说明，默认Continuous
+ * allowLoopback: false, //是否可以自己连自己，默认为false
+ * JPList:[]//里面也是节点的配置
+ * @param {String} assignNodeID 指定的nodeId,当导入流程图时可以使用
  * @return {Element} 节点
  */
 flowChartKit.newNode = function (x, y, data, assignNodeID) {
@@ -194,9 +207,9 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
     d.style.top = top + "px";
 
     // 坐标落在gird中
-    var pos = new Vector(node.offset().left, node.offset().top)
-    pos = flowChartKit.grid.GetNearestCellCenter(pos)
-    node.offset({ left: pos.x, top: pos.y });
+    // var pos = new Vector(node.offset().left, node.offset().top)
+    // pos = flowChartKit.grid.GetNearestCellCenter(pos)
+    // node.offset({ left: pos.x, top: pos.y });
 
     node.on('mouseover', function (ev) {
         $('#' + delBtnID).show()
@@ -215,9 +228,9 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
 
     node.on('mouseup', function (ev) {
         // 坐标落在grid中
-        var pos = new Vector(node.offset().left, node.offset().top)
-        pos = flowChartKit.grid.GetNearestCellCenter(pos);
-        node.offset({ left: pos.x, top: pos.y });
+        // var pos = new Vector(node.offset().left, node.offset().top)
+        // pos = flowChartKit.grid.GetNearestCellCenter(pos);
+        // node.offset({ left: pos.x, top: pos.y });
         flowChartKit.jsPlumbIns.revalidate(id); //通知jsPlumb某个元素有变化
         node.off('mousemove');
         node.on('mouseover', function (ev) {
@@ -250,16 +263,18 @@ flowChartKit.initNode = function (el, data) {
     var allowLoopback = data.allowLoopback || false;
     var isSource = data.isSource == null ? true : data.isSource;
     var isTarget = data.isTarget == null ? true : data.isTarget;
+    var sourceAnchor = data.sourceAnchor || "Continuous";
+    var targetAnchor = data.targetAnchor || "Continuous";
 
     // initialise draggable elements.
-    jsPlumbIns.draggable(el);
+    jsPlumbIns.draggable(el, { grid: [flowChartKit.grid.CellSize, flowChartKit.grid.CellSize] });
 
     if (isSource && maxOut != 0) {
         jsPlumbIns.makeSource(el, {
             filter: ".ep",
-            anchor: "Continuous",
+            anchor: sourceAnchor,
             allowLoopback: allowLoopback,
-            connectorStyle: { stroke: "#5c96bc", strokeWidth: 2, outlineStroke: "transparent", outlineWidth: 4 },
+            connectorStyle: { stroke: flowChartKit.lineColor, strokeWidth: 2, outlineStroke: "transparent", outlineWidth: 4 },
             connectionType: "basic",
             extract: {
                 "action": "the-action"
@@ -273,7 +288,7 @@ flowChartKit.initNode = function (el, data) {
     if (isTarget && maxIn != 0) {
         jsPlumbIns.makeTarget(el, {
             dropOptions: { hoverClass: "dragHover" },
-            anchor: "Continuous",
+            anchor: targetAnchor,
             maxConnections: maxIn,
             allowLoopback: allowLoopback,
             onMaxConnections: function (info, e) {
@@ -306,9 +321,10 @@ flowChartKit.delNode = function (node) {
     flowChartKit.doCallback(flowChartKit.CallbackTypes.onDeleteNode, { nodeID: nodeId });
 }
 
+
 flowChartKit.newListNode = function (
     x, y, data, assignNodeID) {
-    var dataList = data.list;
+    var dataList = data.JPList;
     var name = data.name || "New Node";
 
     var instance = flowChartKit.jsPlumbIns;
@@ -316,7 +332,7 @@ flowChartKit.newListNode = function (
 
     var jqNode = $("#" + node.id);
     var listId = "list_" + node.id;
-    jqNode.attr("listNode", true);
+    jqNode.attr("JPListNode", true);
     var listHtml = "<div class=\"list list-lhs\" >";
     listHtml += "<ul id=\"" + listId + "\">"
 
@@ -342,6 +358,7 @@ flowChartKit.newListNode = function (
                 instance.makeSource(items[i], {
                     allowLoopback: allowLoopback,
                     maxConnections: maxOut,
+                    connectorStyle: { stroke: flowChartKit.lineColor, strokeWidth: 2, outlineStroke: "transparent", outlineWidth: 4 },
                     anchor: ["Left", "Right"]
                 });
             }
@@ -365,16 +382,32 @@ flowChartKit.addPoint = function () {
 
 }
 
+flowChartKit.connect = function (source, target, label, anchor, endPoint) {
+    var common = {}
+    if (label != null) {
+        common["overlays"] = [
+            ["Label", { label: label, id: "label", location: 0.75 }]];
+    }
+    if (anchor != null) {
+        common["anchors"] = anchor;
+    } else {
+        common["anchors"] = ["AutoDefault"];
+    }
+    if (endPoint != null) {
+        common["endpoint"] = endPoint;
+    }
+    common.paintStyle = { stroke: flowChartKit.lineColor, strokeWidth: 2, outlineStroke: "transparent", outlineWidth: 4 };
+    flowChartKit._connect(source, target, common);
+}
 
-flowChartKit.connect = function (sourceID, targetID, overlays) {
-    if (overlays != null) {
+flowChartKit._connect = function (source, target, common) {
+    if (common != null) {
         flowChartKit.jsPlumbIns.connect({
-            source: sourceID, target: targetID,
-            overlays: overlays
-        });
+            source: source, target: target,
+        }, common);
     } else {
         flowChartKit.jsPlumbIns.connect({
-            source: sourceID, target: targetID
+            source: source, target: target,
         });
     }
 }
@@ -389,12 +422,16 @@ flowChartKit.delConnection = function (connection) {
     flowChartKit.jsPlumbIns.deleteConnection(connection);
 }
 
-flowChartKit.getNodeInfor = function () {
+flowChartKit.getNodeById = function () {
 
 }
 
-flowChartKit.getConnectionInfor = function () {
-
+flowChartKit.getConnectionById = function (id) {
+    var list = flowChartKit.jsPlumbIns.getConnections({ id: id }, true);
+    if (list.length > 0) {
+        return list[0];
+    }
+    return null;
 }
 
 flowChartKit.clean = function () {
@@ -402,9 +439,12 @@ flowChartKit.clean = function () {
 }
 
 flowChartKit.doCallback = function (callbackType, parmas) {
-    var callback = flowChartKit.callbaks[callbackType];
-    if (callback != null) {
-        callback(parmas);
+    for (x in flowChartKit.callbaksArray) {
+        var callbackObj = flowChartKit.callbaksArray[x];
+        var callback = callbackObj[callbackType];
+        if (callback != null) {
+            callback(parmas);
+        }
     }
 }
 flowChartKit.getZoom = function () {

@@ -4,8 +4,11 @@ maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
 maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
 isSource: true,//可作为连接的来源，默认为true
 isTarget: true,//可作为连接的目标，默认为true
+sourceAnchor: 作为来源时连线的锚点，详细参见jsplumb的说明，默认Continuous
+targetAnchor: 作为目标时连线的锚点，详细参见jsplumb的说明，默认Continuous
 allowLoopback: false, //是否可以自己连自己，默认为false
-list:[]//里面也是节点的配置
+JPList:[]//里面也是节点的配置
+fields:字段信息。。。。。
 */
 var treeData = [
   {
@@ -21,6 +24,7 @@ var treeData = [
         maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
         isSource: true,//可作为连接的来源，默认为true
         isTarget: true,//可作为连接的目标，默认为true
+        targetAnchor: ["Top", "Left"],
         allowLoopback: false, //是否可以自己连自己，默认为false
       },
       {
@@ -52,7 +56,7 @@ var treeData = [
         maxOut: 0,
         isSource: false,
         isTarget: true,
-        list: [
+        JPList: [
           { name: "键1", cmd: 1010, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
           { name: "键2", cmd: 1011, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
           { name: "键3", cmd: 1011, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
@@ -117,8 +121,9 @@ main.getFlowZoomCenter = function (canvas, flowPanel, zoomVal) {
   return [offX, offY];
 }
 
+//新建节点
 main.doNewNode = function (x, y, nodeData, assignNodeID) {
-  if (nodeData.list != null) {
+  if (nodeData.JPList != null) {
     flowChartKit.newListNode(x, y, nodeData, assignNodeID);
   } else {
     flowChartKit.newNode(x, y, nodeData, assignNodeID);
@@ -129,12 +134,50 @@ main.doNewNode = function (x, y, nodeData, assignNodeID) {
 main.specNewNode = function (x, y, nodeData) {
   flowChartKit.jsPlumbIns.batch(function () {
     var node1 = flowChartKit.newNode(x, y, nodeData);
-    var node2 = flowChartKit.newListNode(x + 100, y-50,
+    var node2 = flowChartKit.newListNode(x + 120, y - 120,
       main.getTreeDataByCmd(main.getTreeData(), 999));
     flowChartKit.connect(node1, node2);
   });
 }
 
+//流程图操作的回调处理逻辑
+main.getCallbacks4Logic = function () {
+  return callbacks = {
+    [flowChartKit.CallbackTypes.onNewNode]: function (params) {
+      var node = params.node;
+      var nodeData = params.data;
+      var nodeId = node.id;
+      if (nodeData.list != null) {
+        //说明是节点组
+      }
+    },
+
+    [flowChartKit.CallbackTypes.onClickNode]: function (params) {
+      var node = params.node;
+      var nodeData = params.data;
+      var nodeId = node.id;
+      if (nodeData.list != null) {
+        //说明是节点组
+      }
+      $("#panel-fields").append("点击了节点：" + nodeData.name + "<br>")
+    },
+    [flowChartKit.CallbackTypes.onDeleteNode]: function (params) {
+      var deletedId = params.nodeID;
+    },
+    [flowChartKit.CallbackTypes.onClickConnection]: function (connection) {
+      $("#panel-fields").append("点击了连接：" + connection.id + "<br>")
+    },
+    [flowChartKit.CallbackTypes.connection]: function (connection) {
+    },
+    [flowChartKit.CallbackTypes.connectionDetached]: function (connection) {
+    },
+    [flowChartKit.CallbackTypes.connectionMoved]: function (connection) {
+    },
+  }
+}
+
+//================================================
+//================================================
 // flowchart处理
 jsPlumb.ready(function () {
   console.log("jsPlumb is ready to use");
@@ -148,7 +191,7 @@ jsPlumb.ready(function () {
   //设置网格
   var origin = new Vector(canvas.offset().left, canvas.offset().top)
   var grid = Grid.new(contanerId, origin, 1000, 1000, 20);
-  // grid.DebugDraw("#DCDCDC");//TODO:画线还有问题，影响性，且还要影响拖动创建节点的坐标位置，导致位置不正确
+  grid.DebugDraw("#DCDCDC", 400, 400, 50);//TODO:画线还有问题，影响性，且还要影响拖动创建节点的坐标位置，导致位置不正确
   //============================================
   //设置画板的高度位置及缩放
   flowChartContaner.width(grid.Width);
@@ -159,7 +202,9 @@ jsPlumb.ready(function () {
   var zoomCenter = main.getFlowZoomCenter(canvas, flowChartContaner, 1);
   //============================================
   //Initialize JsPlumb
-  var instance = flowChartKit.init(grid, contanerId, flowChartKit.Connector.StateMachine, myDataProc);
+  var instance = flowChartKit.init(grid, contanerId,
+    flowChartKit.Connector.StateMachine,
+    [myDataProc, main.getCallbacks4Logic()]);
   flowChartKit.setZoom(1, zoomCenter);
   //============================================
   //处理画布拖动
@@ -176,6 +221,7 @@ jsPlumb.ready(function () {
       old = now;
     });
   });
+
   canvas.on('mouseup', function (event) {
     //要先关mousemove
     canvas.off('mousemove');
@@ -201,7 +247,7 @@ jsPlumb.ready(function () {
     var dir = delta > 0 ? 'Up' : 'Down';
     var zoom = flowChartKit.getZoom();
     zoom += delta;
-    zoom = zoom > 3 ? 3 : zoom;
+    zoom = zoom > 4 ? 4 : zoom;
     zoom = zoom < 0.1 ? 0.1 : zoom;
     flowChartKit.setZoom(zoom, zoomCenter);
     return false;
@@ -258,4 +304,9 @@ jsPlumb.ready(function () {
 
   jsPlumb.fire("jsFlowLoaded", instance);
 
+
+  //test
+  $("#radio1").on("click", function () {
+    flowChartKit.importDefaults({Connector: flowChartKit.Connector.Flowchart});
+  });
 });
