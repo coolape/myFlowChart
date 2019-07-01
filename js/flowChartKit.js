@@ -479,7 +479,6 @@ flowChartKit.setZoom = function (zoom, transformOrigin, el) {
 
 flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
     //TODO:当拖动了流程图后，重新设置origin后要跳一下，头痛
-    return;
     var instance = flowChartKit.jsPlumbIns;
     el = el || instance.getContainer();
 
@@ -487,11 +486,11 @@ flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
     var zoom = flowChartKit.getZoom();
     var offsetX = (transformOrigin[0] - oldOrigin[0]) / 100;
     var offsetY = (transformOrigin[1] - oldOrigin[1]) / 100;
-    console.log(offsetX + "========" + offsetY + "=======" + zoom)
-    console.log(parseInt(el.style.width) + "========" + el.style.height)
-    offsetX = offsetX * parseInt(el.style.width) / zoom;
-    offsetY = offsetY * parseInt(el.style.height) / zoom / 2;
-    console.log(offsetX)
+    // console.log(offsetX + "========" + offsetY + "=======" + zoom)
+    // console.log(parseInt(el.style.width) + "========" + el.style.height)
+    offsetX = offsetX * parseInt(el.style.width) * zoom;
+    offsetY = offsetY * parseInt(el.style.height) * zoom;
+    // console.log(offsetX)
     var x = parseFloat(el.style.left);
     var y = parseFloat(el.style.top);
 
@@ -504,7 +503,6 @@ flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
     }
 
     el.style["transformOrigin"] = oString;
-
 
 
     el.style.left = (x - offsetX) + "px";
