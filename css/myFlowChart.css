@@ -17,6 +17,11 @@
     cursor:default;
 }
 
+.content-nopan {
+    overflow: scroll !important;
+    cursor:default;
+}
+
 .flowchart-panel {    
     border:1px solid black;
     background-color:white;

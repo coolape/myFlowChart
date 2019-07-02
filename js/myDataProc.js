@@ -4,8 +4,12 @@ var myDataProc = {
         var node = params.node;
         var nodeData = params.data;
         var nodeId = node.id;
-        if (nodeData.list != null) {
+        if (nodeData.JPList != null) {
             //说明是节点组
+            var childNodes = params.children;//列表对象
+            for (i = 0; i < childNodes.length; i++) {
+                // console.log(childNodes[i].id);
+            }
         }
         console.log(flowChartKit.CallbackTypes.onNewNode + "==" + nodeId);
     },
@@ -14,7 +18,7 @@ var myDataProc = {
         var node = params.node;
         var nodeData = params.data;
         var nodeId = node.id;
-        if (nodeData.list != null) {
+        if (nodeData.JPList != null) {
             //说明是节点组
         }
 

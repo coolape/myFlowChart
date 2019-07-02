@@ -45,7 +45,7 @@ var treeData = [
         id: 5,
         cmd: 4,
         name: "转人工",
-        maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
+        maxIn: -1, //最大连入的线数量, 默认为-1，表示不受限制
         maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
       },
       {
@@ -112,8 +112,8 @@ main.getFlowZoomCenter = function (canvas, flowPanel, zoomVal) {
 
   var canvasW = canvas.width();
   var canvasH = canvas.height();
-  var flowW = flowPanel.width()*zoomVal;
-  var flowH = flowPanel.height()*zoomVal;
+  var flowW = flowPanel.width() * zoomVal;
+  var flowH = flowPanel.height() * zoomVal;
 
 
   var offX = ((canvasW / 2 + canvasLeft - flowLeft) / flowW);
@@ -134,7 +134,9 @@ main.doNewNode = function (x, y, nodeData, assignNodeID) {
 main.specNewNode = function (x, y, nodeData) {
   flowChartKit.jsPlumbIns.batch(function () {
     var node1 = flowChartKit.newNode(x, y, nodeData);
-    var node2 = flowChartKit.newListNode(x + 120, y - 120,
+    var x2 = x + 120
+    var y2 = y - 120
+    var node2 = flowChartKit.newListNode(x2, y2,
       main.getTreeDataByCmd(main.getTreeData(), 999));
     flowChartKit.connect(node1, node2);
   });
@@ -147,7 +149,7 @@ main.getCallbacks4Logic = function () {
       var node = params.node;
       var nodeData = params.data;
       var nodeId = node.id;
-      if (nodeData.list != null) {
+      if (nodeData.JPList != null) {
         //说明是节点组
         $("#panel-fields").append("新建了节点组：" + nodeData.name + "<br>")
       } else {
@@ -159,7 +161,7 @@ main.getCallbacks4Logic = function () {
       var node = params.node;
       var nodeData = params.data;
       var nodeId = node.id;
-      if (nodeData.list != null) {
+      if (nodeData.JPList != null) {
         //说明是节点组
       }
       $("#panel-fields").append("点击了节点：" + nodeData.name + "<br>")
@@ -212,7 +214,8 @@ jsPlumb.ready(function () {
   var instance = flowChartKit.init(grid, contanerId,
     flowChartKit.Connector.StateMachine,
     [myDataProc, main.getCallbacks4Logic()]);
-  flowChartKit.setZoom(1, zoomCenter);
+  flowChartKit.setZoom(1);
+  flowChartKit.setZoomCenter(zoomCenter, [0,0]);
   //============================================
   //处理画布拖动
   canvas.on('mousedown', function (event) {
@@ -312,11 +315,6 @@ jsPlumb.ready(function () {
 
   //test==========================================
   $("#radio1").on("click", function () {
-    flowChartKit.importDefaults({Connector: flowChartKit.Connector.Flowchart});
-  });
-
-  $("#testbutton").on("click", function () {
-
-    flowChartKit.setZoomCenter([0.1, 0.3], [0.5,0.5]);
+    flowChartKit.importDefaults({ Connector: flowChartKit.Connector.Flowchart });
   });
 });

@@ -200,16 +200,15 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
     // d.style.top = y+"px";
     jsPlumbIns.getContainer().appendChild(d);
 
+    var zoom = flowChartKit.getZoom();
     var node = $('#' + id)
-    var left = x - node.width() / 2;
-    var top = y - node.height() / 2;
-    d.style.left = left + "px";
-    d.style.top = top + "px";
-
+    var left = x - (node.width() * zoom / 2);
+    var top = y - (node.height() * zoom / 2);
     // 坐标落在gird中
-    // var pos = new Vector(node.offset().left, node.offset().top)
-    // pos = flowChartKit.grid.GetNearestCellCenter(pos)
-    // node.offset({ left: pos.x, top: pos.y });
+    var pos = new Vector(left, top)
+    pos = flowChartKit.grid.GetNearestCellCenter(pos)
+    d.style.left = pos.x + "px";
+    d.style.top = pos.y + "px";
 
     node.on('mouseover', function (ev) {
         $('#' + delBtnID).show()
@@ -228,9 +227,13 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
 
     node.on('mouseup', function (ev) {
         // 坐标落在grid中
-        // var pos = new Vector(node.offset().left, node.offset().top)
-        // pos = flowChartKit.grid.GetNearestCellCenter(pos);
-        // node.offset({ left: pos.x, top: pos.y });
+        var zoom = flowChartKit.getZoom();
+        var pos = new Vector(node.position().left, node.position().top)
+        pos = Vector.mul(pos, 1/zoom);
+        pos = flowChartKit.grid.GetNearestCellCenter(pos);
+        d.style.left = pos.x + "px";
+        d.style.top = pos.y + "px";
+
         flowChartKit.jsPlumbIns.revalidate(id); //通知jsPlumb某个元素有变化
         node.off('mousemove');
         node.on('mouseover', function (ev) {
@@ -267,7 +270,8 @@ flowChartKit.initNode = function (el, data) {
     var targetAnchor = data.targetAnchor || "Continuous";
 
     // initialise draggable elements.
-    jsPlumbIns.draggable(el, { grid: [flowChartKit.grid.CellSize, flowChartKit.grid.CellSize] });
+    // jsPlumbIns.draggable(el, { grid: [flowChartKit.grid.CellSize, flowChartKit.grid.CellSize] });
+    jsPlumbIns.draggable(el);
 
     if (isSource && maxOut != 0) {
         jsPlumbIns.makeSource(el, {
@@ -337,14 +341,19 @@ flowChartKit.newListNode = function (
     listHtml += "<ul id=\"" + listId + "\">"
 
     for (i = 0; i < dataList.length; i++) {
-        listHtml += "<li dataIndex=\"" + i + "\">" + dataList[i].name + "</li>";
+        listHtml += "<li ";
+        var childAssignNodeID = dataList[i].assignNodeID; //指定子节点的id，导入流程图需要用到
+        if (childAssignNodeID != null) {
+            listHtml += " id=\"" + childAssignNodeID + "\"";
+        }
+        listHtml += " dataIndex=\"" + i + "\">" + dataList[i].name + "</li>";
     }
     listHtml += "</ui></div>";
     jqNode.append(listHtml);
 
+    var items = node.querySelectorAll("li");
     instance.batch(function () {
         // configure items
-        var items = node.querySelectorAll("li");
         for (var i = 0; i < items.length; i++) {
             var dataIndex = parseInt(items[i].getAttribute("dataIndex"));
             var subData = dataList[dataIndex];
@@ -372,8 +381,8 @@ flowChartKit.newListNode = function (
             }
         }
     });
-    var nodes = instance.addList(document.querySelector("#" + listId));
-    flowChartKit.doCallback(flowChartKit.CallbackTypes.onNewNode, { node: node, data: data });
+    instance.addList(document.querySelector("#" + listId));
+    flowChartKit.doCallback(flowChartKit.CallbackTypes.onNewNode, { node: node, data: data, children: items });
     return node;
 }
 
@@ -459,22 +468,29 @@ zoom is a decimal where 1 means 100%.
 */
 flowChartKit.setZoom = function (zoom, transformOrigin, el) {
     var instance = flowChartKit.jsPlumbIns;
-    transformOrigin = transformOrigin || [0.5, 0.5];
+    // transformOrigin = transformOrigin || [0.5, 0.5];
     el = el || instance.getContainer();
     var p = ["webkit", "moz", "ms", "o"],
-        s = "scale(" + zoom + ")",
+        s = "scale(" + zoom + ")";
+    var oString = "";
+    if (transformOrigin != null) {
         oString = (transformOrigin[0] * 100) + "% " + (transformOrigin[1] * 100) + "%";
+    }
 
     for (var i = 0; i < p.length; i++) {
-        el.style[p[i] + "TransformOrigin"] = oString;
+        if (transformOrigin != null) {
+            el.style[p[i] + "TransformOrigin"] = oString;
+        }
         el.style[p[i] + "Transform"] = s;
     }
 
-    el.style["transformOrigin"] = oString;
+    if (transformOrigin != null) {
+        el.style["transformOrigin"] = oString;
+    }
     el.style["transform"] = s;
 
     instance.setZoom(zoom);
-    flowChartKit.grid.zoom(zoom);
+    // flowChartKit.grid.zoom(1/zoom);
 };
 
 flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
@@ -486,8 +502,8 @@ flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
     var zoom = flowChartKit.getZoom();
     var offsetX = (transformOrigin[0] - oldOrigin[0]);
     var offsetY = (transformOrigin[1] - oldOrigin[1]);
-    offsetX = offsetX * parseInt(el.style.width) * (zoom-1);
-    offsetY = offsetY * parseInt(el.style.height) * (zoom-1);
+    offsetX = offsetX * parseInt(el.style.width) * (zoom - 1);
+    offsetY = offsetY * parseInt(el.style.height) * (zoom - 1);
     var x = parseFloat(el.style.left);
     var y = parseFloat(el.style.top);
 
@@ -504,6 +520,5 @@ flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
     //修正坐标
     el.style.left = (x + offsetX) + "px";
     el.style.top = (y + offsetY) + "px";
-
 };
 
