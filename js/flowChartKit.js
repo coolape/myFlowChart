@@ -229,7 +229,7 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
         // 坐标落在grid中
         var zoom = flowChartKit.getZoom();
         var pos = new Vector(node.position().left, node.position().top)
-        pos = Vector.mul(pos, 1/zoom);
+        pos = Vector.mul(pos, 1 / zoom);
         pos = flowChartKit.grid.GetNearestCellCenter(pos);
         d.style.left = pos.x + "px";
         d.style.top = pos.y + "px";
@@ -386,7 +386,6 @@ flowChartKit.newListNode = function (
     return node;
 }
 
-
 flowChartKit.addPoint = function () {
 
 }
@@ -456,6 +455,7 @@ flowChartKit.doCallback = function (callbackType, parmas) {
         }
     }
 }
+
 flowChartKit.getZoom = function () {
     return flowChartKit.jsPlumbIns.getZoom();
 }
@@ -522,3 +522,22 @@ flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
     el.style.top = (y + offsetY) + "px";
 };
 
+// 处理当左边树节点的事件
+flowChartKit.treeNodeEventDelegate = {
+    [myTree.CallbackTypes.onClick]:
+        function (node, event) {
+            //onclick node
+        },
+    [myTree.CallbackTypes.onDragStart]:
+        function (node, event) {
+            //drag start
+        },
+    [myTree.CallbackTypes.onDrag]:
+        function (node, event) {
+            //drag
+        },
+    [myTree.CallbackTypes.onDragStop]:
+        function (node, event) {
+            //dtarg stop
+        }
+}

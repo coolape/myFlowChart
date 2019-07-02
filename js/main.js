@@ -215,7 +215,7 @@ jsPlumb.ready(function () {
     flowChartKit.Connector.StateMachine,
     [myDataProc, main.getCallbacks4Logic()]);
   flowChartKit.setZoom(1);
-  flowChartKit.setZoomCenter(zoomCenter, [0,0]);
+  flowChartKit.setZoomCenter(zoomCenter, [0, 0]);
   //============================================
   //处理画布拖动
   canvas.on('mousedown', function (event) {
@@ -262,42 +262,23 @@ jsPlumb.ready(function () {
   });
   //============================================
   //Initialize Control Tree View
-  var isOverFlowChartCanvas = function (e) {
-    var targetCollisionDiv = canvas;
-    return (
-      e.pageX > targetCollisionDiv.offset().left &&
-      e.pageX <
-      targetCollisionDiv.offset().left +
-      targetCollisionDiv.width() &&
-      e.pageY > targetCollisionDiv.offset().top &&
-      e.pageY <
-      targetCollisionDiv.offset().top + targetCollisionDiv.height()
-    );
-  }
-
-  var isDragingTreeNode = false;
-  $(function () {
-    $('#control-panel').tree({
-      data: main.getTreeData(),
-      autoOpen: true,
-      dragAndDrop: true,
-      onCanMove: function (node) {
-        return !node.isParentNode;
+  var treeEventDelegate = {
+    [myTree.CallbackTypes.onClick]:
+      function (node, event) {
+        //onclick node
       },
-      onCanMoveTo: function (moved_node, target_node, position) {
-        //返回false后，就不能拖动改变tree的位置了
-        return false;
+    [myTree.CallbackTypes.onDragStart]:
+      function (node, event) {
+        //drag start
       },
-      onDragMove: function (node, event) {
-        // flowChartContaner.trigger("mouseover", event);
-        if (!isDragingTreeNode) {
-          //drag start
-        }
-        isDragingTreeNode = true;
+    [myTree.CallbackTypes.onDrag]:
+      function (node, event) {
+        //drag
       },
-      onDragStop: function (node, event) {
-        isDragingTreeNode = false;
-        if (isOverFlowChartCanvas(event)) {
+    [myTree.CallbackTypes.onDragStop]:
+      function (node, event) {
+        //dtarg stop
+        if (myUtl.isPointOverElement(event.pageX, event.pageY, canvas)) {
           var mx = (event.pageX - flowChartContaner.offset().left) / flowChartKit.getZoom();
           var my = (event.pageY - flowChartContaner.offset().top) / flowChartKit.getZoom();
           if (node.cmd == 1) {
@@ -306,9 +287,9 @@ jsPlumb.ready(function () {
             main.doNewNode(mx, my, node);
           }
         }
-      },
-    });
-  });
+      }
+  }
+  myTree.init("control-panel", main.getTreeData(), [treeEventDelegate, flowChartKit.treeNodeEventDelegate]);
 
   jsPlumb.fire("jsFlowLoaded", instance);
 

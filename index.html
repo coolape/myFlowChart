@@ -37,10 +37,8 @@
   <div class="flow-fluid">
     <div class="row">
       <div class="col-md-2" style="z-index: 10;">
-        <div class="panel panel-default" style="margin:2px;height:400px">
-          <div class="panel-body">
-            <div id="control-panel">
-            </div>
+        <div class="panel panel-default content-nopan" style="margin:2px;height:400px">
+          <div id="control-panel" class="panel-body">
           </div>
         </div>
       </div>
@@ -54,7 +52,7 @@
       </div>
       <div class="col-md-3" style="z-index: 10;">
         <div class="panel panel-default content-nopan" style="margin:2px;height:400px">
-          <div class="panel-body " id="panel-fields">
+          <div class="panel-body" id="panel-fields">
           </div>
         </div>
       </div>
@@ -64,8 +62,8 @@
   <div class="footer">
     <div class="container">
       <input type="radio" id="radio1">点这个驹驹，然后再连接看下效果</input>
-      <p>1.实现了一些基础的功能，相当于搭建好了框架；</p>
-      <p>2.Demo中的节点都做了最大连接的限制，<br>“按键”节点只能被连入，不能连出，但是每个单独的键可以连其它节点；</p>
+      1.实现了一些基础的功能，相当于搭建好了框架;<br>
+      2.Demo中的节点都做了最大连接的限制，<br>“按键”节点只能被连入，不能连出，但是每个单独的键可以连其它节点；
     </div>
   </div>
 
@@ -81,8 +79,10 @@
   <script type="text/javascript" src="./plugins/js-vector-master/js/vector.js"></script>
   <script type="text/javascript" src="./plugins/jsplumb-master/dist/js/jsplumb.js"></script>
 
-  <script type="text/javascript" src="./js/flowChartKit.js"></script>
+  <script type="text/javascript" src="./js/myUtl.js"></script>
+  <script type="text/javascript" src="./js/myTree.js"></script>
   <script type="text/javascript" src="./js/Grid.js"></script>
+  <script type="text/javascript" src="./js/flowChartKit.js"></script>
   <script type="text/javascript" src="./js/myDataProc.js"></script>
   <script type="text/javascript" src="./js/main.js"></script>
 </body>
