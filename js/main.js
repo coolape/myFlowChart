@@ -14,12 +14,12 @@ var treeData = [
   {
     name: "IVR流程",
     isParentNode: true,
-    icon:"littledot.png",
+    icon: "littledot.png",
     id: 1,
     children: [
       {
         id: 2,
-        icon:"littledot.png",
+        icon: "littledot.png",
         cmd: 1,
         name: "播放录音",
         maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
@@ -31,7 +31,7 @@ var treeData = [
       },
       {
         id: 3,
-        icon:"littledot.png",
+        icon: "littledot.png",
         cmd: 2,
         name: "重听",
         maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
@@ -39,7 +39,7 @@ var treeData = [
       },
       {
         id: 4,
-        icon:"littledot.png",
+        icon: "littledot.png",
         cmd: 3,
         name: "返回上一层",
         maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
@@ -47,7 +47,7 @@ var treeData = [
       },
       {
         id: 5,
-        icon:"littledot.png",
+        icon: "littledot.png",
         cmd: 4,
         name: "转人工",
         maxIn: -1, //最大连入的线数量, 默认为-1，表示不受限制
@@ -55,7 +55,7 @@ var treeData = [
       },
       {
         id: 6,
-        icon:"littledot.png",
+        icon: "littledot.png",
         cmd: 999,
         name: "按键",
         maxIn: 1,
@@ -84,27 +84,6 @@ var treeData = [
 //树的数据
 main.getTreeData = function () {
   return treeData;
-}
-
-main.getTreeDataByCmd = function (treeData, cmd) {
-  for (index in treeData) {
-    var ret = main.eachGetTreeDataByCmd(treeData[index], cmd);
-    if (ret != null) {
-      return ret;
-    }
-  }
-  return null;
-}
-
-main.eachGetTreeDataByCmd = function (treeData, cmd) {
-  if (treeData.cmd != null) {
-    if (treeData.cmd == cmd) {
-      return treeData;
-    }
-  }
-  if (treeData.children != null) {
-    return main.getTreeDataByCmd(treeData.children, cmd);
-  }
 }
 
 /*
@@ -143,7 +122,7 @@ main.specNewNode = function (x, y, nodeData) {
     var x2 = x + 120
     var y2 = y - 120
     var node2 = flowChartKit.newListNode(x2, y2,
-      main.getTreeDataByCmd(main.getTreeData(), 999));
+      myTree.getTreeDataById(6));
     flowChartKit.connect(node1, node2);
   });
 }
@@ -305,4 +284,13 @@ jsPlumb.ready(function () {
   $("#radio1").on("click", function () {
     flowChartKit.importDefaults({ Connector: flowChartKit.Connector.Flowchart });
   });
+  var json;
+  $("#export").on("click", function () {
+    json = myDataProc.exportJson();
+    console.log(json);
+  });
+  $("#import").on("click", function () {
+    myDataProc.importJson(json);
+  });
+
 });

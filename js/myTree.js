@@ -9,11 +9,13 @@ myTree.CallbackTypes = {
     onDragStop: "onDragStop",
 }
 
+myTree.data = [];
 myTree.isDragingTreeNode = false;
 myTree.dragOutAlpha = 0.1;
 myTree.eventDelegateList = null;//[{onClickNode:, onDragStart:, onDrag:, onDragStop:}]
 myTree.init = function (contaner, data, eventDelegateList) {
     myTree.eventDelegateList = eventDelegateList;
+    myTree.data = data;
     $(function () {
         $('#' + contaner).tree({
             data: data,
@@ -75,6 +77,33 @@ myTree.init = function (contaner, data, eventDelegateList) {
             }
         });
     });
+}
+
+/** 
+ * 通过ID取得树的节点数据
+*/
+myTree.getTreeDataById = function (id) {
+    return myTree._getTreeDataById(myTree.data, id);
+}
+myTree._getTreeDataById = function (treeData, id) {
+    for (index in treeData) {
+        var ret = myTree._eachGetTreeDataById(treeData[index], id);
+        if (ret != null) {
+            return ret;
+        }
+    }
+    return null;
+}
+
+myTree._eachGetTreeDataById = function (treeData, id) {
+    if (treeData.id != null) {
+        if (treeData.id == id) {
+            return treeData;
+        }
+    }
+    if (treeData.children != null) {
+        return myTree._getTreeDataById(treeData.children, id);
+    }
 }
 
 myTree.doCallback = function (callbackType, node, event) {

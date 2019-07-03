@@ -39,6 +39,7 @@ flowChartKit.jsPlumbIns = null;   // jsPlumb的实例
  */
 flowChartKit.init = function (grid, containerId, connector, callbaksArray) {
     flowChartKit.grid = grid;
+    flowChartKit.containerId = containerId;
     flowChartKit.callbaksArray = callbaksArray || [];
     var contaner = $("#" + containerId);
     flowChartKit.lineColor = "#5c96bc";
@@ -97,7 +98,7 @@ flowChartKit.init = function (grid, containerId, connector, callbaksArray) {
     // id as the label overlay's text.
     jsPlumbIns.bind("connection", function (info) {
         // info.connection.getOverlay("label").setLabel(info.connection.id);
-        // console.log("connection==" + info.connection.id);
+        // console.log(info.connection)
         // console.log("source==" + info.connection.source.id)
         // console.log("target==" + info.connection.target.id)
         flowChartKit.doCallback(flowChartKit.CallbackTypes.connection, info.connection);
@@ -251,6 +252,18 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
 }
 
 /**
+ * 取得节点在网格中的坐标index
+ */
+flowChartKit.getNodeGridPos = function (nodeId) {
+    var node = $("#" + nid);
+    var zoom = flowChartKit.getZoom();
+    var pos = new Vector(node.position().left, node.position().top)
+    pos = Vector.mul(pos, 1 / zoom);
+    var index = flowChartKit.grid.GetCellIndexByPos(pos);
+    return index;
+}
+
+/**
  * 初始化节点
  * @method initNode
  * @for flowChartKit
@@ -318,7 +331,12 @@ flowChartKit.initNode = function (el, data) {
  * @param {Element} node Element对象
  */
 flowChartKit.delNode = function (node) {
-    var nodeId = node.id
+    var nodeId = "";
+    if (typeof (node) == "string") {
+        nodeId = node;
+    } else {
+        nodeId = node.id;
+    }
     var jsPlumbIns = flowChartKit.jsPlumbIns
     // jsPlumbIns.removeGroup(node, true);
     jsPlumbIns.deleteConnectionsForElement(node)
@@ -341,14 +359,24 @@ flowChartKit.newListNode = function (
     jqNode.attr("JPListNode", true);
     var listHtml = "<div class=\"list list-lhs\" >";
     listHtml += "<ul id=\"" + listId + "\">"
+    var tmpLidt = null;
 
-    for (i = 0; i < dataList.length; i++) {
+    //如果有jp_children，说明导入流程图
+    var jp_children = data.jp_children;
+    if (jp_children != null) {
+        tmpLidt = jp_children;
+    } else {
+        tmpLidt = dataList;
+    }
+
+    for (i = 0; i < tmpLidt.length; i++) {
         listHtml += "<li ";
-        var childAssignNodeID = dataList[i].assignNodeID; //指定子节点的id，导入流程图需要用到
+        var childAssignNodeID = tmpLidt[i].jp_nid; //指定子节点的id，导入流程图需要用到
+        var index = tmpLidt[i].dataIndex || i
         if (childAssignNodeID != null) {
             listHtml += " id=\"" + childAssignNodeID + "\"";
         }
-        listHtml += " dataIndex=\"" + i + "\">" + dataList[i].name + "</li>";
+        listHtml += " dataIndex=\"" + index + "\">" + dataList[index].name + "</li>";
     }
     listHtml += "</ui></div>";
     jqNode.append(listHtml);
@@ -446,6 +474,11 @@ flowChartKit.getConnectionById = function (id) {
 
 flowChartKit.clean = function () {
     flowChartKit.activeConnection = null;
+    $("#" + flowChartKit.containerId).html("");
+    jsPlumb.select({ scope: "foo" }).each(function (connection) {
+        flowChartKit.delNode(connection.source);
+        flowChartKit.delNode(connection.target);
+    });
 }
 
 flowChartKit.doCallback = function (callbackType, parmas) {
