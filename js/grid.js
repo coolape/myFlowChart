@@ -143,6 +143,10 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
         return grid.GetCellCenterByIndex(index);
     }
 
+    grid.GetNearestCellPosition = function (pos) {
+        var index = grid.GetCellIndexByPos(pos);
+        return grid.GetCellPositionByIndex(index);
+    }
     /**
      * returns a position in world space coordinates.
      * @method GetCellCenterByIndex

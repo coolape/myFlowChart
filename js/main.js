@@ -14,10 +14,12 @@ var treeData = [
   {
     name: "IVR流程",
     isParentNode: true,
+    icon:"littledot.png",
     id: 1,
     children: [
       {
         id: 2,
+        icon:"littledot.png",
         cmd: 1,
         name: "播放录音",
         maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
@@ -29,6 +31,7 @@ var treeData = [
       },
       {
         id: 3,
+        icon:"littledot.png",
         cmd: 2,
         name: "重听",
         maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
@@ -36,6 +39,7 @@ var treeData = [
       },
       {
         id: 4,
+        icon:"littledot.png",
         cmd: 3,
         name: "返回上一层",
         maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
@@ -43,13 +47,15 @@ var treeData = [
       },
       {
         id: 5,
+        icon:"littledot.png",
         cmd: 4,
         name: "转人工",
         maxIn: -1, //最大连入的线数量, 默认为-1，表示不受限制
         maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
       },
       {
-        id: 5,
+        id: 6,
+        icon:"littledot.png",
         cmd: 999,
         name: "按键",
         maxIn: 1,
@@ -199,8 +205,9 @@ jsPlumb.ready(function () {
   //============================================
   //设置网格
   var origin = new Vector(canvas.offset().left, canvas.offset().top)
-  var grid = Grid.new(contanerId, origin, 1000, 1000, 20);
-  grid.DebugDraw("#DCDCDC", 400, 400, 50);//TODO:画线还有问题，影响性，且还要影响拖动创建节点的坐标位置，导致位置不正确
+  var grid = Grid.new(contanerId, origin, 400, 400, 50);
+  grid.DebugDraw("#DCDCDC");
+  // grid.DebugDraw("#DCDCDC", 400, 400, 50);//TODO:画线还有问题，影响性，且还要影响拖动创建节点的坐标位置，导致位置不正确
   //============================================
   //设置画板的高度位置及缩放
   flowChartContaner.width(grid.Width);

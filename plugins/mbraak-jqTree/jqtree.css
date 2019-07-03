@@ -51,6 +51,7 @@ ul.jqtree-tree {
         cursor: pointer;
         position: relative;
         display: flex;
+        text-align: center;
     }
 
     ul.jqtree-tree .jqtree-title {

@@ -206,7 +206,8 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
     var top = y - (node.height() * zoom / 2);
     // 坐标落在gird中
     var pos = new Vector(left, top)
-    pos = flowChartKit.grid.GetNearestCellCenter(pos)
+    // pos = flowChartKit.grid.GetNearestCellCenter(pos)
+    pos = flowChartKit.grid.GetNearestCellPosition(pos);
     d.style.left = pos.x + "px";
     d.style.top = pos.y + "px";
 
@@ -230,7 +231,8 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
         var zoom = flowChartKit.getZoom();
         var pos = new Vector(node.position().left, node.position().top)
         pos = Vector.mul(pos, 1 / zoom);
-        pos = flowChartKit.grid.GetNearestCellCenter(pos);
+        // pos = flowChartKit.grid.GetNearestCellCenter(pos);
+        pos = flowChartKit.grid.GetNearestCellPosition(pos);
         d.style.left = pos.x + "px";
         d.style.top = pos.y + "px";
 

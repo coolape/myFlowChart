@@ -10,15 +10,28 @@ myTree.CallbackTypes = {
 }
 
 myTree.isDragingTreeNode = false;
-myTree.dragOutAlpha = 0.05;
+myTree.dragOutAlpha = 0.1;
 myTree.eventDelegateList = null;//[{onClickNode:, onDragStart:, onDrag:, onDragStop:}]
 myTree.init = function (contaner, data, eventDelegateList) {
     myTree.eventDelegateList = eventDelegateList;
     $(function () {
         $('#' + contaner).tree({
             data: data,
+            openedIcon: '-',
+            closedIcon: '+',
             autoOpen: true,
             dragAndDrop: true,
+            onCreateLi: function (node, $li, is_selected) {
+                // Add 'icon' span before title
+                if (node.icon != null && node.icon != "") {
+                    // $li.find('.jqtree-title').before('<span class="icon"></span>');
+                    var iconHtml = '<img style="background-repeat:no-repeat;' +
+                        'vertical-align: middle;' +
+                        'display:inline-block;width: 30px;height: 30px;"' +
+                        'src="treeIcon/' + node.icon + '"/>' + node.name;
+                    $li.find('.jqtree-title').html(iconHtml);
+                }
+            },
             onCanMove: function (node) {
                 return !node.isParentNode;
             },
