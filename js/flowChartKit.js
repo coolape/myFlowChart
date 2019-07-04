@@ -17,6 +17,7 @@ flowChartKit.CallbackTypes = {
     connection: "connection",//当有连接时回调
     connectionDetached: "connectionDetached",//当连接断开时回调
     connectionMoved: "connectionMoved",//当连接移开时回调
+    onZooming: "onZooming",//缩放时的回调
 }
 flowChartKit.cfg;
 flowChartKit.activeConnection = null;   // 活动的连接
@@ -24,55 +25,8 @@ flowChartKit.jsPlumbIns = null;   // jsPlumb的实例
 flowChartKit.grid;
 flowChartKit.containerId;
 flowChartKit.callbaksArray;
-flowChartKit.zoomCenter;
-
-
-flowChartKit.refreshGrid = function (gridSize, gridCellSize) {
-    var cfg = flowChartKit.cfg;
-    gridSize = gridSize || cfg.gridSize;
-    gridCellSize = gridCellSize || cfg.gridCellSize;
-    cfg.gridSize = gridSize;
-    cfg.gridCellSize = gridCellSize;
-    var grid = flowChartKit.grid;
-    grid.init(new Vector(0, 0), cfg.gridSize, cfg.gridSize, cfg.gridCellSize);
-
-    if (cfg.isDrawGrid) {
-        grid.DebugDraw("#DCDCDC");
-    } else {
-        grid.clena();
-    }
-    var flowChartcontainer = $("#" + cfg.containerId);
-    var canvas = $("#" + cfg.canvasId);
-    //设置画板的高度位置及缩放
-    flowChartcontainer.width(grid.Width);
-    flowChartcontainer.height(grid.Height);
-    var offsetLeft = -flowChartcontainer.width() / 2 + canvas.width() / 2 + canvas.offset().left;
-    var offsetTop = -flowChartcontainer.height() / 2 + canvas.height() / 2 + canvas.offset().top;
-    flowChartcontainer.offset({ left: offsetLeft, top: offsetTop });
-    flowChartKit.zoomCenter = flowChartKit.getFlowZoomCenter(canvas, flowChartcontainer, 1);
-    flowChartKit.setZoom(1);
-    flowChartKit.setZoomCenter(flowChartKit.zoomCenter, [0, 0]);
-}
-
-/*
-* 取得流程图的每次缩放的中心点
-*/
-flowChartKit.getFlowZoomCenter = function (canvas, flowPanel, zoomVal) {
-    var canvasLeft = canvas.offset().left;
-    var canvasTop = canvas.offset().top;
-    var flowLeft = flowPanel.offset().left;
-    var flowTop = flowPanel.offset().top;
-
-    var canvasW = canvas.width();
-    var canvasH = canvas.height();
-    var flowW = flowPanel.width() * zoomVal;
-    var flowH = flowPanel.height() * zoomVal;
-
-
-    var offX = ((canvasW / 2 + canvasLeft - flowLeft) / flowW);
-    var offY = ((canvasH / 2 + canvasTop - flowTop) / flowH);
-    return [offX, offY];
-}
+flowChartKit.zoomCenter = [0, 0];
+flowChartKit.nodes = {};
 
 /**
  * 初始化
@@ -85,6 +39,7 @@ flowChartKit.getFlowZoomCenter = function (canvas, flowPanel, zoomVal) {
     cfg.canvasId; 画布的id
     cfg.containerId; 流程图的容器id
     cfg.connector; 连接线的方式，默认是StateMachine
+    cfg.zoomRange:[0.1, 4] 缩放范围
  * @param {Array} callbaksArray callbaks数组连接类型
  * callbaks.onNewNode:当创建节点时回调
  * callbaks.onDeleteNode:当删除节点时回调
@@ -98,6 +53,12 @@ flowChartKit.init = function (cfg, callbaksArray) {
     if (flowChartKit.jsPlumbIns != null) {
         return
     }
+    cfg.zoomRange = cfg.zoomRange || [0.1, 4];
+    cfg.gridSize = cfg.gridSize || 400;
+    cfg.gridCellSize = cfg.gridCellSize || 50;
+    cfg.isDrawGrid = cfg.isDrawGrid || true;
+    cfg.connector = cfg.connector || flowChartKit.Connector.StateMachine;
+
     flowChartKit.cfg = cfg;
     var origin = new Vector(0, 0);
     var grid = Grid.new(cfg.containerId, origin, cfg.gridSize, cfg.gridSize, cfg.gridCellSize);
@@ -262,8 +223,67 @@ flowChartKit.init = function (cfg, callbaksArray) {
     return jsPlumbIns;
 }
 
+/**
+ * 导入配置
+ */
 flowChartKit.importDefaults = function (cfg) {
     flowChartKit.jsPlumbIns.importDefaults(cfg);
+}
+
+/**
+ * 刷新网格
+ */
+flowChartKit.refreshGrid = function (gridSize, gridCellSize) {
+    var cfg = flowChartKit.cfg;
+    gridSize = gridSize || cfg.gridSize;
+    gridCellSize = gridCellSize || cfg.gridCellSize;
+    cfg.gridSize = gridSize;
+    cfg.gridCellSize = gridCellSize;
+    var grid = flowChartKit.grid;
+    if (grid.Cols != gridSize || gridCellSize != grid.CellSize) {
+        grid.clean();
+    }
+
+    grid.init(new Vector(0, 0), cfg.gridSize, cfg.gridSize, cfg.gridCellSize);
+
+    if (cfg.isDrawGrid) {
+        grid.DebugDraw("#DCDCDC");
+    } else {
+        grid.clean();
+    }
+    var flowChartcontainer = $("#" + cfg.containerId);
+    var canvas = $("#" + cfg.canvasId);
+    //设置画板的高度位置及缩放
+    flowChartcontainer.width(grid.Width);
+    flowChartcontainer.height(grid.Height);
+    var w = flowChartcontainer.width() * flowChartKit.getZoom();
+    var h = flowChartcontainer.height() * flowChartKit.getZoom();
+    var offsetLeft = -w / 2 + canvas.width() / 2 + canvas.offset().left;
+    var offsetTop = -h / 2 + canvas.height() / 2 + canvas.offset().top;
+    flowChartcontainer.offset({ left: offsetLeft, top: offsetTop });
+    var old = flowChartKit.zoomCenter;
+    flowChartKit.zoomCenter = flowChartKit.getFlowZoomCenter(canvas, flowChartcontainer, flowChartKit.getZoom());
+    flowChartKit.setZoom(1);
+    flowChartKit.setZoomCenter(flowChartKit.zoomCenter, old);
+}
+
+/*
+* 取得流程图的每次缩放的中心点
+*/
+flowChartKit.getFlowZoomCenter = function (canvas, flowPanel, zoomVal) {
+    var canvasLeft = canvas.offset().left;
+    var canvasTop = canvas.offset().top;
+    var flowLeft = flowPanel.offset().left;
+    var flowTop = flowPanel.offset().top;
+
+    var canvasW = canvas.width();
+    var canvasH = canvas.height();
+    var flowW = flowPanel.width() * zoomVal;
+    var flowH = flowPanel.height() * zoomVal;
+
+    var offX = ((canvasW / 2 + canvasLeft - flowLeft) / flowW);
+    var offY = ((canvasH / 2 + canvasTop - flowTop) / flowH);
+    return [offX, offY];
 }
 
 /**
@@ -272,7 +292,7 @@ flowChartKit.importDefaults = function (cfg) {
  * @for flowChartKit
  * @param {int} x 位置
  * @param {int} y 位置
- * @param {Object} data 节点数据信息，详细信息如下
+ * @param {Object} data  data.cfg节点数据信息，详细信息如下,data.infor 其它数据信息
  * 节点的配置说明:
  * maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
  * maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
@@ -292,12 +312,15 @@ flowChartKit.newNode = function (x, y, data, assignNodeID) {
 }
 
 flowChartKit._createNode = function (x, y, data, assignNodeID) {
-    var name = data.name || "New Node";
-    var maxIn = data.maxIn || -1;
-    var maxOut = data.maxOut || -1;
-    var allowLoopback = data.allowLoopback || false;
-    var isSource = data.isSource == null ? true : data.isSource;
-    var isTarget = data.isTarget == null ? true : data.isTarget;
+    var name = data.cfg.name;
+    if (data.infor != null && data.infor.name != null) {
+        name = data.infor.name;
+    }
+    var maxIn = data.cfg.maxIn || -1;
+    var maxOut = data.cfg.maxOut || -1;
+    var allowLoopback = data.cfg.allowLoopback || false;
+    var isSource = data.cfg.isSource == null ? true : data.cfg.isSource;
+    var isTarget = data.cfg.isTarget == null ? true : data.cfg.isTarget;
 
     var jsPlumbIns = flowChartKit.jsPlumbIns
     var d = document.createElement("div");
@@ -391,16 +414,17 @@ flowChartKit.getNodeGridPos = function (nodeId) {
  */
 flowChartKit.initNode = function (el, data) {
     var jsPlumbIns = flowChartKit.jsPlumbIns
-    var maxIn = data.maxIn || -1;
-    var maxOut = data.maxOut || -1;
-    var allowLoopback = data.allowLoopback || false;
-    var isSource = data.isSource == null ? true : data.isSource;
-    var isTarget = data.isTarget == null ? true : data.isTarget;
-    var sourceAnchor = data.sourceAnchor || "Continuous";
-    var targetAnchor = data.targetAnchor || "Continuous";
+    var maxIn = data.cfg.maxIn || -1;
+    var maxOut = data.cfg.maxOut || -1;
+    var allowLoopback = data.cfg.allowLoopback || false;
+    var isSource = data.cfg.isSource == null ? true : data.cfg.isSource;
+    var isTarget = data.cfg.isTarget == null ? true : data.cfg.isTarget;
+    var sourceAnchor = data.cfg.sourceAnchor || "Continuous";
+    var targetAnchor = data.cfg.targetAnchor || "Continuous";
 
     // initialise draggable elements.
     // jsPlumbIns.draggable(el, { grid: [flowChartKit.grid.CellSize, flowChartKit.grid.CellSize] });
+    flowChartKit.nodes[el.id] = el;
     jsPlumbIns.draggable(el);
 
     if (isSource && maxOut != 0) {
@@ -438,33 +462,9 @@ flowChartKit.initNode = function (el, data) {
     return el;
 };
 
-/**
- * 删除节点
- * @method delNode
- * @for flowChartKit
- * @param {jsPlumb} jsPlumbIns jsPlumb的实例
- * @param {Element} node Element对象
- */
-flowChartKit.delNode = function (node) {
-    var nodeId = "";
-    if (typeof (node) == "string") {
-        nodeId = node;
-    } else {
-        nodeId = node.id;
-    }
-    var jsPlumbIns = flowChartKit.jsPlumbIns
-    // jsPlumbIns.removeGroup(node, true);
-    jsPlumbIns.deleteConnectionsForElement(node)
-    jsPlumbIns.remove(node)
-
-    flowChartKit.doCallback(flowChartKit.CallbackTypes.onDeleteNode, { nodeID: nodeId });
-}
-
-
 flowChartKit.newListNode = function (
     x, y, data, assignNodeID) {
-    var dataList = data.JPList;
-    var name = data.name || "New Node";
+    var dataList = data.cfg.JPList;
 
     var instance = flowChartKit.jsPlumbIns;
     var node = flowChartKit._createNode(x, y, data, assignNodeID);
@@ -477,7 +477,7 @@ flowChartKit.newListNode = function (
     var tmpLidt = null;
 
     //如果有jp_children，说明导入流程图
-    var jp_children = data.jp_children;
+    var jp_children = data.cfg.jp_children;
     if (jp_children != null) {
         tmpLidt = jp_children;
     } else {
@@ -487,7 +487,7 @@ flowChartKit.newListNode = function (
     for (i = 0; i < tmpLidt.length; i++) {
         listHtml += "<li ";
         var childAssignNodeID = tmpLidt[i].jp_nid; //指定子节点的id，导入流程图需要用到
-        var index = tmpLidt[i].dataIndex || i
+        var index = tmpLidt[i].jp_dataIndex || i
         if (childAssignNodeID != null) {
             listHtml += " id=\"" + childAssignNodeID + "\"";
         }
@@ -566,6 +566,30 @@ flowChartKit._connect = function (source, target, common) {
 }
 
 /**
+ * 删除节点
+ * @method delNode
+ * @for flowChartKit
+ * @param {jsPlumb} jsPlumbIns jsPlumb的实例
+ * @param {Element} node Element对象
+ */
+flowChartKit.delNode = function (node) {
+    if (node == null) return;
+    var nodeId = "";
+    if (typeof (node) == "string") {
+        nodeId = node;
+    } else {
+        nodeId = node.id;
+    }
+    var jsPlumbIns = flowChartKit.jsPlumbIns
+    // jsPlumbIns.removeGroup(node, true);
+    jsPlumbIns.remove(node)
+    jsPlumbIns.deleteConnectionsForElement(node)
+    flowChartKit.nodes[nodeId] = null;
+    delete flowChartKit.nodes[nodeId];
+    flowChartKit.doCallback(flowChartKit.CallbackTypes.onDeleteNode, { nodeID: nodeId });
+}
+
+/**
  * 删除连接
  * @method delConnection
  * @for flowChartKit
@@ -589,11 +613,18 @@ flowChartKit.getConnectionById = function (id) {
 
 flowChartKit.clean = function () {
     flowChartKit.activeConnection = null;
-    $("#" + flowChartKit.containerId).html("");
-    jsPlumb.select({ scope: "foo" }).each(function (connection) {
-        flowChartKit.delNode(connection.source);
-        flowChartKit.delNode(connection.target);
-    });
+    // flowChartKit.jsPlumbIns.select().each(function (connection) {
+    //     var source = connection.source;
+    //     var target = connection.target;
+    //     flowChartKit.delNode(source);
+    //     flowChartKit.delNode(target);
+    // });
+    for(k in flowChartKit.nodes) {
+        flowChartKit.delNode(flowChartKit.nodes[k]);
+    }
+    flowChartKit.nodes = {};
+    flowChartKit.jsPlumbIns.clear();
+    flowChartKit.jsPlumbIns.reset(true);
 }
 
 flowChartKit.doCallback = function (callbackType, parmas) {
@@ -641,6 +672,9 @@ flowChartKit.setZoom = function (zoom, transformOrigin, el) {
 
     instance.setZoom(zoom);
     // flowChartKit.grid.zoom(1/zoom);
+    var zoomRange = flowChartKit.cfg.zoomRange;
+    var zoomPersent = (zoom - zoomRange[0]) / (zoomRange[1] - zoomRange[0]);
+    flowChartKit.doCallback(flowChartKit.CallbackTypes.onZooming, zoomPersent)
 };
 
 flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {

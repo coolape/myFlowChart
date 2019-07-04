@@ -79,6 +79,20 @@ var treeData = [
       },
     ]
   }
+  ,{
+    name: "IVR流程",
+    isParentNode: true,
+    icon: "littledot.png",
+    id: 1,
+    children: [
+      {
+        id: 2,
+        icon: "littledot.png",
+        cmd: 1,
+        name: "播放录音",
+      }
+    ]
+  }
 ];
 
 //树的数据
@@ -90,21 +104,21 @@ main.getTreeData = function () {
 //新建节点
 main.doNewNode = function (x, y, nodeData, assignNodeID) {
   if (nodeData.JPList != null) {
-    flowChartKit.newListNode(x, y, nodeData, assignNodeID);
+    flowChartKit.newListNode(x, y, { cfg: nodeData }, assignNodeID);
   } else {
-    flowChartKit.newNode(x, y, nodeData, assignNodeID);
+    flowChartKit.newNode(x, y, { cfg: nodeData }, assignNodeID);
   }
 }
 
 //特殊处理的节点
 main.specNewNode = function (x, y, nodeData) {
   flowChartKit.jsPlumbIns.batch(function () {
-    var node1 = flowChartKit.newNode(x, y, nodeData);
+    var node1 = flowChartKit.newNode(x, y, { cfg: nodeData });
     var x2 = x + 120
     var y2 = y - 120
     var node2 = flowChartKit.newListNode(x2, y2,
-      myTree.getTreeDataById(6));
-    flowChartKit.connect(node1, node2);
+      { cfg: myTree.getTreeDataById(6) });
+    flowChartKit.connect(node1.id, node2.id);
   });
 }
 
@@ -147,6 +161,9 @@ main.getCallbacks4Logic = function () {
     },
     [flowChartKit.CallbackTypes.connectionMoved]: function (connection) {
       $("#panel-fields").append("连接moved：" + connection.id + "<br>")
+    },
+    [flowChartKit.CallbackTypes.onZooming]: function (persent) {
+      $("#panel-fields").append(flowChartKit.CallbackTypes.onZooming + ":" + persent + "<br>")
     },
   }
 }
@@ -221,10 +238,11 @@ jsPlumb.ready(function () {
   $("#radio1").on("click", function () {
     flowChartKit.importDefaults({ Connector: flowChartKit.Connector.Flowchart });
   });
-  var json;
+  var json='{"jp_name":"new flowchart","jp_gridSize":400,"jp_gridCellSize":50,"jp_nodes":[{"jp_nid":"3fd911ee-e40c-4efe-9863-ad9de370dad7","jp_cfgId":2,"jp_pos":79396,"jp_connections":["6428ec3e-2c78-40b1-ae48-4a38e291450a"]},{"jp_nid":"6428ec3e-2c78-40b1-ae48-4a38e291450a","jp_cfgId":6,"jp_children":[{"jp_nid":"jsPlumb_2_1","jp_dataIndex":0,"jp_connections":[]},{"jp_nid":"jsPlumb_2_2","jp_dataIndex":1,"jp_connections":[]},{"jp_nid":"jsPlumb_2_3","jp_dataIndex":2,"jp_connections":[]},{"jp_nid":"jsPlumb_2_4","jp_dataIndex":3,"jp_connections":[]},{"jp_nid":"jsPlumb_2_5","jp_dataIndex":4,"jp_connections":[]},{"jp_nid":"jsPlumb_2_6","jp_dataIndex":5,"jp_connections":[]},{"jp_nid":"jsPlumb_2_7","jp_dataIndex":6,"jp_connections":[]},{"jp_nid":"jsPlumb_2_8","jp_dataIndex":7,"jp_connections":[]},{"jp_nid":"jsPlumb_2_9","jp_dataIndex":8,"jp_connections":[]},{"jp_nid":"jsPlumb_2_10","jp_dataIndex":9,"jp_connections":[]},{"jp_nid":"jsPlumb_2_11","jp_dataIndex":10,"jp_connections":[]},{"jp_nid":"jsPlumb_2_12","jp_dataIndex":11,"jp_connections":[]}],"jp_pos":78198,"jp_connections":[]}]}';
   $("#export").on("click", function () {
     json = myDataProc.exportJson();
     console.log(json);
+    alert(json);
   });
   $("#import").on("click", function () {
     myDataProc.importJson(json);

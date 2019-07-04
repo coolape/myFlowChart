@@ -11,7 +11,7 @@ myTree.CallbackTypes = {
 
 myTree.data = [];
 myTree.isDragingTreeNode = false;
-myTree.dragOutAlpha = 0.1;
+myTree.dragOutAlpha = 0.5;
 myTree.eventDelegateList = null;//[{onClickNode:, onDragStart:, onDrag:, onDragStop:}]
 myTree.init = function (contaner, data, eventDelegateList) {
     myTree.eventDelegateList = eventDelegateList;
@@ -106,6 +106,9 @@ myTree._eachGetTreeDataById = function (treeData, id) {
     }
 }
 
+/**
+ * 处理回调
+ */
 myTree.doCallback = function (callbackType, node, event) {
     for (x in myTree.eventDelegateList) {
         var callbackObj = myTree.eventDelegateList[x];
