@@ -79,17 +79,18 @@ var treeData = [
       },
     ]
   }
-  ,{
-    name: "IVR流程",
+  , {
+    name: "常用流程",
     isParentNode: true,
     icon: "littledot.png",
-    id: 1,
+    id: 10100,
     children: [
       {
-        id: 2,
+        id: 10102,
         icon: "littledot.png",
-        cmd: 1,
-        name: "播放录音",
+        cmd: 1000,
+        flowChart: '{"jp_name":"new flowchart","jp_gridSize":400,"jp_gridCellSize":50,"jp_nodes":[{"jp_nid":"3fd911ee-e40c-4efe-9863-ad9de370dad7","jp_cfgId":2,"jp_pos":79396,"jp_connections":["6428ec3e-2c78-40b1-ae48-4a38e291450a"]},{"jp_nid":"6428ec3e-2c78-40b1-ae48-4a38e291450a","jp_cfgId":6,"jp_children":[{"jp_nid":"jsPlumb_2_1","jp_dataIndex":0,"jp_connections":[]},{"jp_nid":"jsPlumb_2_2","jp_dataIndex":1,"jp_connections":[]},{"jp_nid":"jsPlumb_2_3","jp_dataIndex":2,"jp_connections":[]},{"jp_nid":"jsPlumb_2_4","jp_dataIndex":3,"jp_connections":[]},{"jp_nid":"jsPlumb_2_5","jp_dataIndex":4,"jp_connections":[]},{"jp_nid":"jsPlumb_2_6","jp_dataIndex":5,"jp_connections":[]},{"jp_nid":"jsPlumb_2_7","jp_dataIndex":6,"jp_connections":[]},{"jp_nid":"jsPlumb_2_8","jp_dataIndex":7,"jp_connections":[]},{"jp_nid":"jsPlumb_2_9","jp_dataIndex":8,"jp_connections":[]},{"jp_nid":"jsPlumb_2_10","jp_dataIndex":9,"jp_connections":[]},{"jp_nid":"jsPlumb_2_11","jp_dataIndex":10,"jp_connections":[]},{"jp_nid":"jsPlumb_2_12","jp_dataIndex":11,"jp_connections":[]}],"jp_pos":78198,"jp_connections":[]}]}',
+        name: "超牛推销流程",
       }
     ]
   }
@@ -121,7 +122,9 @@ main.specNewNode = function (x, y, nodeData) {
     flowChartKit.connect(node1.id, node2.id);
   });
 }
-
+main.addFlowchart = function (x, y, nodeCfg) {
+  myDataProc.importJson(nodeCfg.flowChart, new Vector(x, y), false);
+}
 //流程图操作的回调处理逻辑
 main.getCallbacks4Logic = function () {
   return callbacks = {
@@ -223,6 +226,8 @@ jsPlumb.ready(function () {
           var my = (event.pageY - flowChartContaner.offset().top) / flowChartKit.getZoom();
           if (node.cmd == 1) {
             main.specNewNode(mx, my, node);
+          } else if (node.cmd == 1000) {
+            main.addFlowchart(mx, my, node);
           } else {
             main.doNewNode(mx, my, node);
           }
@@ -238,7 +243,7 @@ jsPlumb.ready(function () {
   $("#radio1").on("click", function () {
     flowChartKit.importDefaults({ Connector: flowChartKit.Connector.Flowchart });
   });
-  var json='{"jp_name":"new flowchart","jp_gridSize":400,"jp_gridCellSize":50,"jp_nodes":[{"jp_nid":"3fd911ee-e40c-4efe-9863-ad9de370dad7","jp_cfgId":2,"jp_pos":79396,"jp_connections":["6428ec3e-2c78-40b1-ae48-4a38e291450a"]},{"jp_nid":"6428ec3e-2c78-40b1-ae48-4a38e291450a","jp_cfgId":6,"jp_children":[{"jp_nid":"jsPlumb_2_1","jp_dataIndex":0,"jp_connections":[]},{"jp_nid":"jsPlumb_2_2","jp_dataIndex":1,"jp_connections":[]},{"jp_nid":"jsPlumb_2_3","jp_dataIndex":2,"jp_connections":[]},{"jp_nid":"jsPlumb_2_4","jp_dataIndex":3,"jp_connections":[]},{"jp_nid":"jsPlumb_2_5","jp_dataIndex":4,"jp_connections":[]},{"jp_nid":"jsPlumb_2_6","jp_dataIndex":5,"jp_connections":[]},{"jp_nid":"jsPlumb_2_7","jp_dataIndex":6,"jp_connections":[]},{"jp_nid":"jsPlumb_2_8","jp_dataIndex":7,"jp_connections":[]},{"jp_nid":"jsPlumb_2_9","jp_dataIndex":8,"jp_connections":[]},{"jp_nid":"jsPlumb_2_10","jp_dataIndex":9,"jp_connections":[]},{"jp_nid":"jsPlumb_2_11","jp_dataIndex":10,"jp_connections":[]},{"jp_nid":"jsPlumb_2_12","jp_dataIndex":11,"jp_connections":[]}],"jp_pos":78198,"jp_connections":[]}]}';
+  var json = '{"jp_name":"new flowchart","jp_gridSize":400,"jp_gridCellSize":50,"jp_nodes":[{"jp_nid":"3fd911ee-e40c-4efe-9863-ad9de370dad7","jp_cfgId":2,"jp_pos":79396,"jp_connections":["6428ec3e-2c78-40b1-ae48-4a38e291450a"]},{"jp_nid":"6428ec3e-2c78-40b1-ae48-4a38e291450a","jp_cfgId":6,"jp_children":[{"jp_nid":"jsPlumb_2_1","jp_dataIndex":0,"jp_connections":[]},{"jp_nid":"jsPlumb_2_2","jp_dataIndex":1,"jp_connections":[]},{"jp_nid":"jsPlumb_2_3","jp_dataIndex":2,"jp_connections":[]},{"jp_nid":"jsPlumb_2_4","jp_dataIndex":3,"jp_connections":[]},{"jp_nid":"jsPlumb_2_5","jp_dataIndex":4,"jp_connections":[]},{"jp_nid":"jsPlumb_2_6","jp_dataIndex":5,"jp_connections":[]},{"jp_nid":"jsPlumb_2_7","jp_dataIndex":6,"jp_connections":[]},{"jp_nid":"jsPlumb_2_8","jp_dataIndex":7,"jp_connections":[]},{"jp_nid":"jsPlumb_2_9","jp_dataIndex":8,"jp_connections":[]},{"jp_nid":"jsPlumb_2_10","jp_dataIndex":9,"jp_connections":[]},{"jp_nid":"jsPlumb_2_11","jp_dataIndex":10,"jp_connections":[]},{"jp_nid":"jsPlumb_2_12","jp_dataIndex":11,"jp_connections":[]}],"jp_pos":78198,"jp_connections":[]}]}';
   $("#export").on("click", function () {
     json = myDataProc.exportJson();
     console.log(json);

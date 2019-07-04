@@ -82,13 +82,14 @@ myDataProc.export = function () {
         var nd = myDataProc.nodes[nid];
         //设置坐标
         nd.jp_pos = flowChartKit.getNodeGridPos(nid);
+        nd.jp_isRoot = true; //先全部设置成root,后面设置连接的时候再重置
         //初始化连接
         nd.jp_connections = [];
         if (nd.jp_children != null) {
             for (i in nd.jp_children) {
                 var subNode = nd.jp_children[i];
                 subNode.jp_connections = [];
-                allSubNodes[subNode.jp_nid] = subNode
+                allSubNodes[subNode.jp_nid] = subNode;
             }
         }
     }
@@ -112,8 +113,14 @@ myDataProc.export = function () {
                 conwrap.label = lb;
             }
             node.jp_connections.push(conwrap);
+            //说明连出的节点肯定不是root
+            var targetNode = myDataProc.nodes[tnid];
+            if (targetNode != null) {
+                delete targetNode.jp_isRoot;
+            }
         }
     }
+
     flowData.jp_nodes = [];
     for (nid in myDataProc.nodes) {
         flowData.jp_nodes.push(myDataProc.nodes[nid]);
@@ -125,18 +132,22 @@ myDataProc.exportJson = function () {
     return JSON.stringify(myDataProc.export());
 }
 
-myDataProc.importJson = function (flowJson) {
-    //clean
-    flowChartKit.clean();
-    myDataProc.clean();
-    //init grid
-    var flowInfor = JSON.parse(flowJson);
-    //============================================
-    //设置网格
-    var gridSize = flowInfor.jp_gridSize;
-    var cellSize = flowInfor.jp_gridCellSize;
-    var grid = flowChartKit.refreshGrid(gridSize, cellSize);
-    //============================================
+myDataProc.importJson = function (flowJson, pos, isAddMode) {
+    isAddMode = isAddMode || false;
+    if (!isAddMode) {
+        //clean
+        flowChartKit.clean();
+        myDataProc.clean();
+        //init grid
+        var flowInfor = JSON.parse(flowJson);
+        //============================================
+        //设置网格
+        var gridSize = flowInfor.jp_gridSize;
+        var cellSize = flowInfor.jp_gridCellSize;
+        flowChartKit.refreshGrid(gridSize, cellSize);
+        //============================================
+    }
+    
     //new nodes
     flowChartKit.jsPlumbIns.batch(function () {
         for (i in flowInfor.jp_nodes) {
