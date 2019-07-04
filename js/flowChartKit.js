@@ -39,7 +39,7 @@ flowChartKit.nodes = {};
     cfg.canvasId; 画布的id
     cfg.containerId; 流程图的容器id
     cfg.connector; 连接线的方式，默认是StateMachine
-    cfg.zoomRange:[0.1, 4] 缩放范围
+    cfg.zoomRange:[0.1, 5] 缩放范围
  * @param {Array} callbaksArray callbaks数组连接类型
  * callbaks.onNewNode:当创建节点时回调
  * callbaks.onDeleteNode:当删除节点时回调
@@ -53,7 +53,7 @@ flowChartKit.init = function (cfg, callbaksArray) {
     if (flowChartKit.jsPlumbIns != null) {
         return
     }
-    cfg.zoomRange = cfg.zoomRange || [0.1, 4];
+    cfg.zoomRange = cfg.zoomRange || [0.1, 5];
     cfg.gridSize = cfg.gridSize || 400;
     cfg.gridCellSize = cfg.gridCellSize || 50;
     cfg.isDrawGrid = cfg.isDrawGrid || true;
@@ -81,8 +81,8 @@ flowChartKit.init = function (cfg, callbaksArray) {
             ["Arrow", {
                 location: 1,
                 id: "arrow",
-                length: 8,
-                width: 10,
+                length: 10,
+                width: 12,
                 foldback: 0.623
             }],
             // ["Label", {
@@ -541,8 +541,8 @@ flowChartKit.connect = function (source, target, label, anchor, endPoint) {
     }
     if (anchor != null) {
         common["anchors"] = anchor;
-    } else {
-        common["anchors"] = ["AutoDefault"];
+    // } else {
+    //     common["anchors"] = ["AutoDefault"];
     }
     if (endPoint != null) {
         common["endpoint"] = endPoint;
