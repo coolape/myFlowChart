@@ -486,11 +486,9 @@ flowChartKit.newListNode = function (
 
     for (i = 0; i < tmpLidt.length; i++) {
         listHtml += "<li ";
-        var childAssignNodeID = tmpLidt[i].jp_nid; //指定子节点的id，导入流程图需要用到
+        var childAssignNodeID = tmpLidt[i].jp_nid || jsPlumbUtil.uuid(); //指定子节点的id，导入流程图需要用到
         var index = tmpLidt[i].jp_dataIndex || i
-        if (childAssignNodeID != null) {
-            listHtml += " id=\"" + childAssignNodeID + "\"";
-        }
+        listHtml += " id=\"" + childAssignNodeID + "\"";
         listHtml += " dataIndex=\"" + index + "\">" + dataList[index].name + "</li>";
     }
     listHtml += "</ui></div>";
@@ -619,7 +617,7 @@ flowChartKit.clean = function () {
     //     flowChartKit.delNode(source);
     //     flowChartKit.delNode(target);
     // });
-    for(k in flowChartKit.nodes) {
+    for (k in flowChartKit.nodes) {
         flowChartKit.delNode(flowChartKit.nodes[k]);
     }
     flowChartKit.nodes = {};

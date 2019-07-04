@@ -121,6 +121,19 @@ myDataProc.export = function () {
         }
     }
 
+    //check root node count
+    var count = 0;
+    for (i in myDataProc.nodes) {
+        if (myDataProc.nodes[i].jp_isRoot) {
+            count++;
+        }
+    }
+    if (count > 1) {
+        throw new Error('Must only one root node. Now the root count=' + count);
+    } else if (count == 0) {
+        throw new Error("There is not root node!");
+    }
+
     flowData.jp_nodes = [];
     for (nid in myDataProc.nodes) {
         flowData.jp_nodes.push(myDataProc.nodes[nid]);
@@ -134,12 +147,11 @@ myDataProc.exportJson = function () {
 
 myDataProc.importJson = function (flowJson, pos, isAddMode) {
     isAddMode = isAddMode || false;
+    var flowInfor = JSON.parse(flowJson);
     if (!isAddMode) {
         //clean
         flowChartKit.clean();
         myDataProc.clean();
-        //init grid
-        var flowInfor = JSON.parse(flowJson);
         //============================================
         //设置网格
         var gridSize = flowInfor.jp_gridSize;
@@ -147,16 +159,37 @@ myDataProc.importJson = function (flowJson, pos, isAddMode) {
         flowChartKit.refreshGrid(gridSize, cellSize);
         //============================================
     }
-    
+
+    var offset = new Vector(0, 0);
+    if (pos != null) {
+        pos = flowChartKit.grid.GetNearestCellPosition(pos);
+        //计算偏移
+        var rootNode;
+        for (i in flowInfor.jp_nodes) {
+            if (flowInfor.jp_nodes[i].jp_isRoot) {
+                rootNode = flowInfor.jp_nodes[i];
+                break;
+            }
+        }
+        if (rootNode != null) {
+            var origPos = flowChartKit.grid.GetCellPositionByIndex(rootNode.jp_pos);
+            console.log(origPos);
+            offset = Vector.sub(pos, origPos);
+        } else {
+            throw new Error('Can not find root node!');
+        }
+    }
+
     //new nodes
     flowChartKit.jsPlumbIns.batch(function () {
         for (i in flowInfor.jp_nodes) {
             var nd = flowInfor.jp_nodes[i];
             var nid = nd.jp_nid;
             var pos = flowChartKit.grid.GetCellPositionByIndex(nd.jp_pos);
+            pos = Vector.add(pos, offset);
             var cfgData = myTree.getTreeDataById(nd.jp_cfgId);
             if (nd.jp_children != null) {
-                //说明时listNode
+                //说明是listNode
                 cfgData.jp_children = nd.jp_children;
                 var d = { cfg: cfgData, infor: nd.data }
                 flowChartKit.newListNode(pos.x, pos.y, d, nid)

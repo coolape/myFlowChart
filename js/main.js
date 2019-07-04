@@ -22,7 +22,7 @@ var treeData = [
         icon: "littledot.png",
         cmd: 1,
         name: "播放录音",
-        maxIn: 1, //最大连入的线数量, 默认为-1，表示不受限制
+        maxIn: -1, //最大连入的线数量, 默认为-1，表示不受限制
         maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
         isSource: true,//可作为连接的来源，默认为true
         isTarget: true,//可作为连接的目标，默认为true
@@ -77,6 +77,17 @@ var treeData = [
           { name: "键*", cmd: 1021, maxIn: 0, maxOut: 1, isSource: true, isTarget: false, },
         ],
       },
+      {
+        id: 7,
+        icon: "littledot.png",
+        cmd: 6,
+        name: "开始",
+        maxIn: 0, //最大连入的线数量, 默认为-1，表示不受限制
+        maxOut: 1,//最大连出的线数量, 默认为-1，表示不受限制
+        isSource: true,//可作为连接的来源，默认为true
+        isTarget: false,//可作为连接的目标，默认为true
+        allowLoopback: false, //是否可以自己连自己，默认为false
+      },
     ]
   }
   , {
@@ -89,7 +100,7 @@ var treeData = [
         id: 10102,
         icon: "littledot.png",
         cmd: 1000,
-        flowChart: '{"jp_name":"new flowchart","jp_gridSize":400,"jp_gridCellSize":50,"jp_nodes":[{"jp_nid":"3fd911ee-e40c-4efe-9863-ad9de370dad7","jp_cfgId":2,"jp_pos":79396,"jp_connections":["6428ec3e-2c78-40b1-ae48-4a38e291450a"]},{"jp_nid":"6428ec3e-2c78-40b1-ae48-4a38e291450a","jp_cfgId":6,"jp_children":[{"jp_nid":"jsPlumb_2_1","jp_dataIndex":0,"jp_connections":[]},{"jp_nid":"jsPlumb_2_2","jp_dataIndex":1,"jp_connections":[]},{"jp_nid":"jsPlumb_2_3","jp_dataIndex":2,"jp_connections":[]},{"jp_nid":"jsPlumb_2_4","jp_dataIndex":3,"jp_connections":[]},{"jp_nid":"jsPlumb_2_5","jp_dataIndex":4,"jp_connections":[]},{"jp_nid":"jsPlumb_2_6","jp_dataIndex":5,"jp_connections":[]},{"jp_nid":"jsPlumb_2_7","jp_dataIndex":6,"jp_connections":[]},{"jp_nid":"jsPlumb_2_8","jp_dataIndex":7,"jp_connections":[]},{"jp_nid":"jsPlumb_2_9","jp_dataIndex":8,"jp_connections":[]},{"jp_nid":"jsPlumb_2_10","jp_dataIndex":9,"jp_connections":[]},{"jp_nid":"jsPlumb_2_11","jp_dataIndex":10,"jp_connections":[]},{"jp_nid":"jsPlumb_2_12","jp_dataIndex":11,"jp_connections":[]}],"jp_pos":78198,"jp_connections":[]}]}',
+        flowChart: '{"jp_name":"new flowchart","jp_gridSize":400,"jp_gridCellSize":50,"jp_nodes":[{"jp_nid":"4699e054-6803-48df-a9eb-426da199825b","jp_cfgId":7,"jp_pos":78994,"jp_isRoot":true,"jp_connections":[{"jp_target":"1c4c9f11-7af3-458d-a491-af709d08e7c1"}]},{"jp_nid":"1c4c9f11-7af3-458d-a491-af709d08e7c1","jp_cfgId":2,"jp_pos":78996,"jp_connections":[{"jp_target":"ea26d55e-e88d-40f0-a599-ba617f240bbf"}]},{"jp_nid":"ea26d55e-e88d-40f0-a599-ba617f240bbf","jp_cfgId":6,"jp_children":[{"jp_nid":"71eb57d2-d0b7-48c1-b20e-efb8f5027da5","jp_dataIndex":0,"jp_connections":[{"jp_target":"a0a64d0a-8092-4b44-aa27-7312a815ec22"}]},{"jp_nid":"7718ae9f-5cbc-41a9-bd03-55570b6e2bd3","jp_dataIndex":1,"jp_connections":[{"jp_target":"484dfaca-6297-437e-a656-2d9a504860a1"}]},{"jp_nid":"f3192dee-b55e-47b8-8027-18538dbf8faf","jp_dataIndex":2,"jp_connections":[]},{"jp_nid":"f1e28bf2-ee52-4750-82fa-d6853de1d388","jp_dataIndex":3,"jp_connections":[]},{"jp_nid":"3466e5cb-d402-40bd-92cd-d7c34aabbb9a","jp_dataIndex":4,"jp_connections":[]},{"jp_nid":"4915e615-b80b-4727-ab41-d7e98d907cd1","jp_dataIndex":5,"jp_connections":[]},{"jp_nid":"f22263b1-29fe-46b3-a4ad-05bd5988e99b","jp_dataIndex":6,"jp_connections":[]},{"jp_nid":"322f04f5-6553-4a39-b996-cb9dc6889967","jp_dataIndex":7,"jp_connections":[]},{"jp_nid":"f6c2bf15-327d-4b4f-bb9e-47bea3275252","jp_dataIndex":8,"jp_connections":[{"jp_target":"ba44e8d8-5189-479a-9b54-a28019155ee1"}]},{"jp_nid":"a15f152d-a4b8-4022-844c-2311e0769cc7","jp_dataIndex":9,"jp_connections":[{"jp_target":"8a5d0b48-aeb5-43be-a3a2-c8e4b3b2fdd6"}]},{"jp_nid":"880c5ef1-60a5-4bfe-8372-31ce4e35ff29","jp_dataIndex":10,"jp_connections":[]},{"jp_nid":"e7b551a7-32f6-425e-9859-324b98c1801f","jp_dataIndex":11,"jp_connections":[]}],"jp_pos":78199,"jp_connections":[]},{"jp_nid":"484dfaca-6297-437e-a656-2d9a504860a1","jp_cfgId":3,"jp_pos":79002,"jp_connections":[{"jp_target":"1c4c9f11-7af3-458d-a491-af709d08e7c1"}]},{"jp_nid":"a0a64d0a-8092-4b44-aa27-7312a815ec22","jp_cfgId":2,"jp_pos":78202,"jp_connections":[{"jp_target":"f87619d7-a4f6-45d6-8809-68272499b3cf"}]},{"jp_nid":"f87619d7-a4f6-45d6-8809-68272499b3cf","jp_cfgId":6,"jp_children":[{"jp_nid":"85c1ae2a-9d3f-43b6-8c9c-1a561d327ff4","jp_dataIndex":0,"jp_connections":[{"jp_target":"8a5d0b48-aeb5-43be-a3a2-c8e4b3b2fdd6"}]},{"jp_nid":"892258fa-d371-4d8a-aa1c-444b1284e4c1","jp_dataIndex":1,"jp_connections":[{"jp_target":"222c2991-4030-40ab-9a6d-086cce9ef5f4"}]},{"jp_nid":"ba1e2a7b-ab84-4e5e-a83c-0e9e243ffc94","jp_dataIndex":2,"jp_connections":[{"jp_target":"4c91040c-7ea1-4710-865a-9e1d719181f9"}]},{"jp_nid":"8a60ea46-802b-402a-80b9-43d7916dde9e","jp_dataIndex":3,"jp_connections":[]},{"jp_nid":"258c18ad-9659-4e9f-988d-c618e8bdd9c4","jp_dataIndex":4,"jp_connections":[]},{"jp_nid":"b17383b0-5c66-4ae7-9d01-7b402bd4445b","jp_dataIndex":5,"jp_connections":[]},{"jp_nid":"6a3b0b72-325f-4585-88ef-41ece6df1bbe","jp_dataIndex":6,"jp_connections":[]},{"jp_nid":"6259c925-6e7a-4c83-adad-54809e3c2e60","jp_dataIndex":7,"jp_connections":[]},{"jp_nid":"80960488-2ea2-44e9-925e-12eeb12373e5","jp_dataIndex":8,"jp_connections":[]},{"jp_nid":"a185b586-1a65-4eae-ad0d-cd5ccc97bc85","jp_dataIndex":9,"jp_connections":[{"jp_target":"8a5d0b48-aeb5-43be-a3a2-c8e4b3b2fdd6"}]},{"jp_nid":"1c2a4d30-04e7-451f-9683-8adf762f4047","jp_dataIndex":10,"jp_connections":[]},{"jp_nid":"6517923a-dbaa-470b-bad6-3f406bf17d2a","jp_dataIndex":11,"jp_connections":[]}],"jp_pos":78205,"jp_connections":[]},{"jp_nid":"ba44e8d8-5189-479a-9b54-a28019155ee1","jp_cfgId":4,"jp_pos":79802,"jp_connections":[]},{"jp_nid":"8a5d0b48-aeb5-43be-a3a2-c8e4b3b2fdd6","jp_cfgId":5,"jp_pos":80602,"jp_connections":[]},{"jp_nid":"222c2991-4030-40ab-9a6d-086cce9ef5f4","jp_cfgId":3,"jp_pos":78609,"jp_connections":[{"jp_target":"a0a64d0a-8092-4b44-aa27-7312a815ec22"}]},{"jp_nid":"4c91040c-7ea1-4710-865a-9e1d719181f9","jp_cfgId":4,"jp_pos":80209,"jp_connections":[{"jp_target":"a0a64d0a-8092-4b44-aa27-7312a815ec22"}]}]}',
         name: "超牛推销流程",
       }
     ]
@@ -115,15 +126,15 @@ main.doNewNode = function (x, y, nodeData, assignNodeID) {
 main.specNewNode = function (x, y, nodeData) {
   flowChartKit.jsPlumbIns.batch(function () {
     var node1 = flowChartKit.newNode(x, y, { cfg: nodeData });
-    var x2 = x + 120
-    var y2 = y - 120
+    var x2 = x + 150
+    var y2 = y - 150
     var node2 = flowChartKit.newListNode(x2, y2,
       { cfg: myTree.getTreeDataById(6) });
     flowChartKit.connect(node1.id, node2.id);
   });
 }
 main.addFlowchart = function (x, y, nodeCfg) {
-  myDataProc.importJson(nodeCfg.flowChart, new Vector(x, y), false);
+  myDataProc.importJson(nodeCfg.flowChart, new Vector(x, y), true);
 }
 //流程图操作的回调处理逻辑
 main.getCallbacks4Logic = function () {
