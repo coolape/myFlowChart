@@ -86,25 +86,6 @@ main.getTreeData = function () {
   return treeData;
 }
 
-/*
-* 取得流程图的每次缩放的中心点
-*/
-main.getFlowZoomCenter = function (canvas, flowPanel, zoomVal) {
-  var canvasLeft = canvas.offset().left;
-  var canvasTop = canvas.offset().top;
-  var flowLeft = flowPanel.offset().left;
-  var flowTop = flowPanel.offset().top;
-
-  var canvasW = canvas.width();
-  var canvasH = canvas.height();
-  var flowW = flowPanel.width() * zoomVal;
-  var flowH = flowPanel.height() * zoomVal;
-
-
-  var offX = ((canvasW / 2 + canvasLeft - flowLeft) / flowW);
-  var offY = ((canvasH / 2 + canvasTop - flowTop) / flowH);
-  return [offX, offY];
-}
 
 //新建节点
 main.doNewNode = function (x, y, nodeData, assignNodeID) {
@@ -182,70 +163,26 @@ jsPlumb.ready(function () {
   var contanerId = "flow-panel"
   var flowChartContaner = $('#' + contanerId)
   //============================================
-  //设置网格
-  var origin = new Vector(canvas.offset().left, canvas.offset().top)
-  var grid = Grid.new(contanerId, origin, 400, 400, 50);
-  grid.DebugDraw("#DCDCDC");
-  // grid.DebugDraw("#DCDCDC", 400, 400, 50);//TODO:画线还有问题，影响性，且还要影响拖动创建节点的坐标位置，导致位置不正确
-  //============================================
-  //设置画板的高度位置及缩放
-  flowChartContaner.width(grid.Width);
-  flowChartContaner.height(grid.Height);
-  var offsetLeft = -flowChartContaner.width() / 2 + canvas.width() / 2 + canvas.offset().left;
-  var offsetTop = -flowChartContaner.height() / 2 + canvas.height() / 2 + canvas.offset().top;
-  flowChartContaner.offset({ left: offsetLeft, top: offsetTop });
-  var zoomCenter = main.getFlowZoomCenter(canvas, flowChartContaner, 1);
-  //============================================
   //Initialize JsPlumb
-  var instance = flowChartKit.init(grid, contanerId,
-    flowChartKit.Connector.StateMachine,
+  /*
+  cfg.gridSize; 网格的大小
+  cfg.gridCellSize; 网格单元格的大小
+  cfg.isDrawGrid;是否画网格线
+  cfg.canvasId; 画布的id
+  cfg.containerId; 流程图的容器id
+  cfg.connector; 连接线的方式，默认是StateMachine
+  */
+  var instance = flowChartKit.init({
+    gridSize: 400,
+    gridCellSize: 50,
+    isDrawGrid: true,
+    canvasId: "flow-canvas",
+    containerId: "flow-panel",
+    connector: flowChartKit.Connector.StateMachine,
+  },
     [myDataProc, main.getCallbacks4Logic()]);
-  flowChartKit.setZoom(1);
-  flowChartKit.setZoomCenter(zoomCenter, [0, 0]);
   //============================================
-  //处理画布拖动
-  canvas.on('mousedown', function (event) {
-    var old = new Vector(event.pageX, event.pageY);
-    canvas.on('mousemove', function (ev) {
-      var now = new Vector(ev.pageX, ev.pageY);
-      var diff = Vector.sub(now, old);
-      var pos = new Vector(flowChartContaner.offset().left, flowChartContaner.offset().top);
-      pos = Vector.add(pos, diff);
-      flowChartContaner.offset({ left: pos.x, top: pos.y });
-      old = now;
-    });
-  });
 
-  canvas.on('mouseup', function (event) {
-    //要先关mousemove
-    canvas.off('mousemove');
-    //重置流程图panel的中心点
-    var old = zoomCenter
-    zoomCenter = main.getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
-    flowChartKit.setZoomCenter(zoomCenter, old);
-  });
-  canvas.mouseleave(function (ev) {
-    //要先关mousemove
-    canvas.off('mousemove');
-    //重置流程图panel的中心点
-    var old = zoomCenter
-    zoomCenter = main.getFlowZoomCenter(canvas, flowChartContaner, flowChartKit.getZoom());
-    flowChartKit.setZoomCenter(zoomCenter, old);
-  });
-  //============================================
-  //处理画布缩放
-  canvas.bind('mousewheel', function (event) {
-    // console.log(event.deltaX, event.deltaY, event.deltaFactor);
-    var delta = Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
-    delta = delta * event.deltaFactor * 0.001;
-    var dir = delta > 0 ? 'Up' : 'Down';
-    var zoom = flowChartKit.getZoom();
-    zoom += delta;
-    zoom = zoom > 4 ? 4 : zoom;
-    zoom = zoom < 0.1 ? 0.1 : zoom;
-    flowChartKit.setZoom(zoom, zoomCenter);
-    return false;
-  });
   //============================================
   //Initialize Control Tree View
   var treeEventDelegate = {

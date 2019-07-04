@@ -118,8 +118,24 @@ myDataProc.exportJson = function () {
 myDataProc.importJson = function (flowJson) {
     //clean
     flowChartKit.clean();
+    flowChartKit.grid.clean();
     myDataProc.clean();
+
     //init grid
     var flowInfor = JSON.parse(flowJson);
-    console.log(flowInfor);
+    //============================================
+    //设置网格
+    var gridSize = flowInfor.gridSize;
+    var cellSize = flowInfor.gridCellSize;
+    var grid = flowChartKit.grid.init(new Vector(0, 0), gridSize, gridSize, cellSize);
+    grid.DebugDraw("#DCDCDC");
+    //============================================
+    //设置画板的高度位置及缩放
+    var flowChartContaner = $("#" + flowChartKit.containerId);
+    flowChartContaner.width(grid.Width);
+    flowChartContaner.height(grid.Height);
+    var offsetLeft = -flowChartContaner.width() / 2 + canvas.width() / 2 + canvas.offset().left;
+    var offsetTop = -flowChartContaner.height() / 2 + canvas.height() / 2 + canvas.offset().top;
+    flowChartContaner.offset({ left: offsetLeft, top: offsetTop });
+    var zoomCenter = main.getFlowZoomCenter(canvas, flowChartContaner, 1);
 }

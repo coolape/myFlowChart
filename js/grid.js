@@ -24,6 +24,7 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
     var originCellSize = 1;
     var m_origin = new Vector(0, 0);
 
+    grid.Contaner = $("#" + contanerID)
     grid.Rows = null;
     grid.Cols = null;
     grid.CellSize = null;
@@ -74,17 +75,16 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
      * @param {Number} cellSize 网格大小
      * @return {null} null
      */
-    grid.init = function (contanerID, origin, numRows, numCols, cellSize) {
-        var contaner = $("#" + contanerID)
+    grid.init = function (origin, numRows, numCols, cellSize) {
+        
         // var origin = new Vector(contaner.offset().left, contaner.offset().top);
         // m_origin = new Vector(0,0);// origin;
-        // m_origin = origin;
+        m_origin = origin;
         originCellSize = cellSize;
         m_numberOfRows = numRows;
         m_numberOfColumns = numCols;
         m_cellSize = cellSize;
 
-        grid.Contaner = contaner;
         grid.Rows = numRows;
         grid.Cols = numCols;
         grid.CellSize = m_cellSize;
@@ -129,6 +129,14 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
             var endPos = Vector.add(startPos, Vector.mul(kZAxis, height));
             grid.lines.push(DrawLine(startPos, endPos, color))
         }
+    }
+
+    grid.clean = function()
+    {
+        for(i in grid.lines) {
+            grid.lines[i].remove();
+        }
+        grid.lines = [];
     }
 
     /**
@@ -455,7 +463,7 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
         }
         return ret;
     }
-    grid.init(contanerID, origin, numRows, numCols, cellSize);
+    grid.init(origin, numRows, numCols, cellSize);
     Grid.current = grid;
     return grid;
 }
