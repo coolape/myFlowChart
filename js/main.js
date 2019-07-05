@@ -154,9 +154,9 @@ main.getCallbacks4Logic = function () {
       var nodeId = node.id;
       if (nodeData.JPList != null) {
         //说明是节点组
-        $("#panel-fields").append("新建了节点组：" + nodeData.name + "<br>")
+        $("#panel-fields").append("新建了节点组：" + nodeData.cfg.name + "<br>")
       } else {
-        $("#panel-fields").append("新建了节点：" + nodeData.name + "<br>")
+        $("#panel-fields").append("新建了节点：" + nodeData.cfg.name + "<br>")
       }
     },
 
@@ -167,7 +167,7 @@ main.getCallbacks4Logic = function () {
       if (nodeData.JPList != null) {
         //说明是节点组
       }
-      $("#panel-fields").append("点击了节点：" + nodeData.name + "<br>")
+      $("#panel-fields").append("点击了节点：" + nodeData.cfg.name + "<br>")
     },
     [flowChartKit.CallbackTypes.onDeleteNode]: function (params) {
       var deletedId = params.nodeID;

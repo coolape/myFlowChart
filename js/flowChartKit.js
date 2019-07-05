@@ -333,6 +333,38 @@ flowChartKit.gotoNode = function (node) {
 }
 
 /**
+ * 递归取得所有的下层节点
+ */
+flowChartKit.getAllLowerNodes = function (node) {
+    var list = [];
+    list.push(node);    //先把root节点加入，防止循环情况可以正常跳出
+    flowChartKit._getAllLowerNodes(list, node);
+    // list.shift();   //把自己去掉
+    return list;
+}
+flowChartKit._getAllLowerNodes = function (list, node) {
+    var _list = flowChartKit.getNextLowerNodes(node);
+    for (i in _list) {
+        //如果已经在数组里了，就跳过
+        if (!list.includes(_list[i])) {
+            list.push(_list[i]);
+            flowChartKit._getAllLowerNodes(list, _list[i]);
+        }
+    }
+}
+
+/**
+ * 取得下一层的节点
+ */
+flowChartKit.getNextLowerNodes = function (node) {
+    var list = [];
+    flowChartKit.jsPlumbIns.select({ source: node }).each(function (connection) {
+        list.push(connection.target.id);
+    });
+    return list;
+}
+
+/**
  * 新建节点
  * @method newNode
  * @for flowChartKit
@@ -374,7 +406,8 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
     var delBtnID = "del_" + id
     d.className = "w";
     d.id = id;
-    d.setAttribute("jpNode", id)
+    d.setAttribute("jpNode", id);       //删除节点时，需要找到这个属性来取得id值，然后删掉节点
+    d.setAttribute("tabindex", "0");    //要设置这个属性，div才能接收到keypress事件
     var innerHTML = "<div class=\"del\" delete-all id=\"" + delBtnID + "\"></div>" + name;
     if (isSource) {
         innerHTML += "<div class=\"ep\"></div>";
@@ -396,6 +429,7 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
     d.style.left = pos.x + "px";
     d.style.top = pos.y + "px";
 
+    var isDraging = false;
     node.on('mouseover', function (ev) {
         $('#' + delBtnID).show()
     });
@@ -406,26 +440,52 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
 
     node.on('mousedown', function (ev) {
         node.off('mouseover');
+        console.log("mousedown");
+        node.on("keydown", function (e) {
+            if (e.which == 16) {
+                //shift
+                var list = flowChartKit.getAllLowerNodes(id);
+                // flowChartKit.addToPosse(id);
+                for(i in list) {
+                    console.log(list[i])
+                }
+                flowChartKit.addToPosse(list);
+            }
+        });
+        node.on("keyup", function (e) {
+            if (e.which == 16) {
+                //shift
+                flowChartKit.cleanPosse();
+            }
+        });
+        node.focus();
+
         node.on('mousemove', function (ev) {
+            isDraging = true;
             $('#' + delBtnID).hide()
         });
     });
 
     node.on('mouseup', function (ev) {
-        // 坐标落在grid中
-        var zoom = flowChartKit.getZoom();
-        var pos = new Vector(node.position().left, node.position().top)
-        pos = Vector.mul(pos, 1 / zoom);
-        // pos = flowChartKit.grid.GetNearestCellCenter(pos);
-        pos = flowChartKit.grid.GetNearestCellPosition(pos);
-        d.style.left = pos.x + "px";
-        d.style.top = pos.y + "px";
-
-        flowChartKit.jsPlumbIns.revalidate(id); //通知jsPlumb某个元素有变化
+        if (isDraging) {
+            // 坐标落在grid中
+            console.log("坐标落在grid中");
+            var zoom = flowChartKit.getZoom();
+            var pos = new Vector(node.position().left, node.position().top)
+            pos = Vector.mul(pos, 1 / zoom);
+            // pos = flowChartKit.grid.GetNearestCellCenter(pos);
+            pos = flowChartKit.grid.GetNearestCellPosition(pos);
+            d.style.left = pos.x + "px";
+            d.style.top = pos.y + "px";
+            flowChartKit.jsPlumbIns.revalidate(id); //通知jsPlumb某个元素有变化
+        }
+        node.off("keydown");
+        flowChartKit.cleanPosse();
         node.off('mousemove');
         node.on('mouseover', function (ev) {
             $('#' + delBtnID).show()
         });
+        isDraging = false;
     });
     node.on("click", function (ev) {
         flowChartKit.doCallback(flowChartKit.CallbackTypes.onClickNode, { node: d, data: data });
@@ -489,14 +549,6 @@ flowChartKit.initNode = function (el, data) {
         });
     }
 
-    var node = $("#" + el.id);
-    node.on("mousedown", function (ev) {
-        console.log("mousedown" + el.id)
-        node.keydown( function (e) {
-            console.log(e.which);
-        });
-        node.focus();
-    });
     // this is not part of the core demo functionality; it is a means for the Toolkit edition's wrapped
     // version of this demo to find out about new nodes being added.
     //
@@ -711,7 +763,7 @@ flowChartKit.setZoom = function (zoom, transformOrigin, el) {
     el.style["transform"] = s;
 
     instance.setZoom(zoom);
-    // flowChartKit.grid.zoom(1/zoom);
+    // flowChartKit.grid.zoom(zoom);
     var zoomRange = flowChartKit.cfg.zoomRange;
     var zoomPersent = (zoom - zoomRange[0]) / (zoomRange[1] - zoomRange[0]);
     flowChartKit.doCallback(flowChartKit.CallbackTypes.onZooming, zoomPersent)
