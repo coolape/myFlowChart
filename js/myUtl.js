@@ -19,3 +19,7 @@ myUtl.isPointOverElement = function (pageX, pageY, targetEl) {
         pageY < h
     );
 }
+
+myUtl.isString = function (f) {
+    return f == null ? false : (typeof f === "string" || f.constructor === String);
+}

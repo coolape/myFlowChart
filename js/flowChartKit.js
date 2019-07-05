@@ -27,6 +27,8 @@ flowChartKit.containerId;
 flowChartKit.callbaksArray;
 flowChartKit.zoomCenter = [0, 0];
 flowChartKit.nodes = {};
+flowChartKit.posseId = "posse01";
+flowChartKit.currPosse = {};
 
 /**
  * 初始化
@@ -172,6 +174,9 @@ flowChartKit.init = function (cfg, callbaksArray) {
         flowChartKit.newNode(e.offsetX, e.offsetY, {name,"New Node"});
     });
     */
+    jsPlumb.on(container, "click", function (e) {
+        flowChartKit.cleanPosse();
+    });
 
     flowChartKit.refreshGrid();
 
@@ -209,9 +214,10 @@ flowChartKit.init = function (cfg, callbaksArray) {
         delta = delta * event.deltaFactor * 0.001;
         var dir = delta > 0 ? 'Up' : 'Down';
         var zoom = flowChartKit.getZoom();
+        var cfg = flowChartKit.cfg;
         zoom += delta;
-        zoom = zoom > 4 ? 4 : zoom;
-        zoom = zoom < 0.1 ? 0.1 : zoom;
+        zoom = zoom >= cfg.zoomRange[1] ? cfg.zoomRange[1] : zoom;
+        zoom = zoom <= cfg.zoomRange[0] ? cfg.zoomRange[0] : zoom;
         flowChartKit.setZoom(zoom, flowChartKit.zoomCenter);
         return false;
     });
@@ -319,7 +325,7 @@ flowChartKit.gotoNode = function (node) {
     var h = flowChartcontainer.height() * zoom;
     var left = flowChartcontainer.offset().lfet;
     var top = flowChartcontainer.offset().top;
-    
+
     var left = -pos.x + canvas.width() / 2 + canvas.offset().left;
     var top = -pos.y + canvas.height() / 2 + canvas.offset().top;
     flowChartcontainer.offset({ left: left, top: top });
@@ -483,10 +489,18 @@ flowChartKit.initNode = function (el, data) {
         });
     }
 
+    var node = $("#" + el.id);
+    node.on("mousedown", function (ev) {
+        console.log("mousedown" + el.id)
+        node.keydown( function (e) {
+            console.log(e.which);
+        });
+        node.focus();
+    });
     // this is not part of the core demo functionality; it is a means for the Toolkit edition's wrapped
     // version of this demo to find out about new nodes being added.
     //
-    // jsPlumbIns.fire("jsPlumbDemoNodeAdded", el);
+    jsPlumbIns.fire("jsPlumbNodeAdded", el);
     return el;
 };
 
@@ -637,14 +651,13 @@ flowChartKit.getConnectionById = function (id) {
     return null;
 }
 
+/**
+ * 清除
+ */
 flowChartKit.clean = function () {
     flowChartKit.activeConnection = null;
-    // flowChartKit.jsPlumbIns.select().each(function (connection) {
-    //     var source = connection.source;
-    //     var target = connection.target;
-    //     flowChartKit.delNode(source);
-    //     flowChartKit.delNode(target);
-    // });
+    flowChartKit.cleanPosse();
+
     for (k in flowChartKit.nodes) {
         flowChartKit.delNode(flowChartKit.nodes[k]);
     }
@@ -703,14 +716,16 @@ flowChartKit.setZoom = function (zoom, transformOrigin, el) {
     var zoomPersent = (zoom - zoomRange[0]) / (zoomRange[1] - zoomRange[0]);
     flowChartKit.doCallback(flowChartKit.CallbackTypes.onZooming, zoomPersent)
 };
-
-flowChartKit.resetZoomCenter = function()
-{
+/**
+ * 重新设置画布的重心
+ */
+flowChartKit.resetZoomCenter = function () {
     var newCenter = flowChartKit.getFlowZoomCenter();
     var old = flowChartKit.zoomCenter;
     flowChartKit.setZoomCenter(newCenter, old);
     flowChartKit.zoomCenter = newCenter;
 }
+
 flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
     var instance = flowChartKit.jsPlumbIns;
     el = el || instance.getContainer();
@@ -738,6 +753,41 @@ flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
     el.style.left = (x + offsetX) + "px";
     el.style.top = (y + offsetY) + "px";
 };
+
+/**
+ * 把节点加到组里
+ */
+flowChartKit.addToPosse = function (nodeId) {
+    flowChartKit.jsPlumbIns.addToPosse(nodeId, flowChartKit.posseId);
+
+    var nodes = !myUtl.isString(nodeId) && (nodeId.tagName == null && nodeId.length != null) ? nodeId : [nodeId];
+    for (i in nodes) {
+        flowChartKit.currPosse[nodes[i]] = true;
+    }
+}
+
+
+/**
+ * 把节点移除出组
+ */
+flowChartKit.removeFromPosse = function (nodeId) {
+    flowChartKit.jsPlumbIns.removeFromPosse(nodeId, flowChartKit.posseId);
+
+    var nodes = !myUtl.isString(nodeId) && (nodeId.tagName == null && nodeId.length != null) ? nodeId : [nodeId];
+    for (i in nodes) {
+        delete flowChartKit.currPosse[nodes[i]];
+    }
+}
+
+/**
+ * 清空组
+ */
+flowChartKit.cleanPosse = function () {
+    for (k in flowChartKit.currPosse) {
+        flowChartKit.jsPlumbIns.removeFromAllPosses(k);
+    }
+    flowChartKit.currPosse = {};
+}
 
 // 处理当左边树节点的事件
 flowChartKit.treeNodeEventDelegate = {
