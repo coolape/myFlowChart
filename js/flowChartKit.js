@@ -193,17 +193,13 @@ flowChartKit.init = function (cfg, callbaksArray) {
         //要先关mousemove
         canvas.off('mousemove');
         //重置流程图panel的中心点
-        var old = flowChartKit.zoomCenter
-        flowChartKit.zoomCenter = flowChartKit.getFlowZoomCenter(canvas, container, flowChartKit.getZoom());
-        flowChartKit.setZoomCenter(flowChartKit.zoomCenter, old);
+        flowChartKit.resetZoomCenter();
     });
     canvas.mouseleave(function (ev) {
         //要先关mousemove
         canvas.off('mousemove');
         //重置流程图panel的中心点
-        var old = flowChartKit.zoomCenter
-        flowChartKit.zoomCenter = flowChartKit.getFlowZoomCenter(canvas, container, flowChartKit.getZoom());
-        flowChartKit.setZoomCenter(flowChartKit.zoomCenter, old);
+        flowChartKit.resetZoomCenter();
     });
     //============================================
     //处理画布缩放
@@ -261,16 +257,20 @@ flowChartKit.refreshGrid = function (gridSize, gridCellSize) {
     var offsetLeft = -w / 2 + canvas.width() / 2 + canvas.offset().left;
     var offsetTop = -h / 2 + canvas.height() / 2 + canvas.offset().top;
     flowChartcontainer.offset({ left: offsetLeft, top: offsetTop });
-    var old = flowChartKit.zoomCenter;
-    flowChartKit.zoomCenter = flowChartKit.getFlowZoomCenter(canvas, flowChartcontainer, flowChartKit.getZoom());
+    // var old = flowChartKit.zoomCenter;
+    // flowChartKit.zoomCenter = flowChartKit.getFlowZoomCenter(canvas, flowChartcontainer, flowChartKit.getZoom());
     flowChartKit.setZoom(1);
-    flowChartKit.setZoomCenter(flowChartKit.zoomCenter, old);
+    flowChartKit.resetZoomCenter();
 }
 
 /*
 * 取得流程图的每次缩放的中心点
 */
-flowChartKit.getFlowZoomCenter = function (canvas, flowPanel, zoomVal) {
+flowChartKit.getFlowZoomCenter = function () {
+    var canvas = canvas || $("#" + flowChartKit.cfg.canvasId);
+    var flowPanel = flowPanel || $("#" + flowChartKit.cfg.containerId);
+    var zoomVal = flowChartKit.getZoom();
+
     var canvasLeft = canvas.offset().left;
     var canvasTop = canvas.offset().top;
     var flowLeft = flowPanel.offset().left;
@@ -284,6 +284,45 @@ flowChartKit.getFlowZoomCenter = function (canvas, flowPanel, zoomVal) {
     var offX = ((canvasW / 2 + canvasLeft - flowLeft) / flowW);
     var offY = ((canvasH / 2 + canvasTop - flowTop) / flowH);
     return [offX, offY];
+}
+
+/**
+ * 取得节点在网格中的坐标index
+ */
+flowChartKit.getNodeGridPos = function (nodeId) {
+    var node = $("#" + nid);
+    var zoom = flowChartKit.getZoom();
+    var pos = new Vector(node.position().left, node.position().top)
+    pos = Vector.mul(pos, 1 / zoom);
+    var index = flowChartKit.grid.GetCellIndexByPos(pos);
+    return index;
+}
+
+/**
+ * 跳转到指定节点
+ */
+flowChartKit.gotoNode = function (node) {
+    var nodeId = null;
+    if (typeof (node) == "string") {
+        nodeId = node;
+    } else {
+        nodeId = node.id;
+    }
+    var index = flowChartKit.getNodeGridPos(nodeId);
+    var pos = flowChartKit.grid.GetCellPositionByIndex(index);
+    var zoom = flowChartKit.getZoom();
+    var flowChartcontainer = $("#" + cfg.containerId);
+    var canvas = $("#" + cfg.canvasId);
+    var w = flowChartcontainer.width() * zoom;
+    var h = flowChartcontainer.height() * zoom;
+    var left = flowChartcontainer.offset().lfet;
+    var top = flowChartcontainer.offset().top;
+    left -= pos.x;
+    top -= pos.y;
+    flowChartcontainer.offset({ left: left, top: top });
+    flowChartKit.zoomCenter = flowChartcontainer.getFlowZoomCenter();
+    flowChartKit.resetZoomCenter()
+    //TODO:
 }
 
 /**
@@ -387,18 +426,6 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
 
     d = flowChartKit.initNode(d, data);
     return d;
-}
-
-/**
- * 取得节点在网格中的坐标index
- */
-flowChartKit.getNodeGridPos = function (nodeId) {
-    var node = $("#" + nid);
-    var zoom = flowChartKit.getZoom();
-    var pos = new Vector(node.position().left, node.position().top)
-    pos = Vector.mul(pos, 1 / zoom);
-    var index = flowChartKit.grid.GetCellIndexByPos(pos);
-    return index;
 }
 
 /**
@@ -541,8 +568,8 @@ flowChartKit.connect = function (source, target, label, anchor, endPoint) {
     }
     if (anchor != null) {
         common["anchors"] = anchor;
-    // } else {
-    //     common["anchors"] = ["AutoDefault"];
+        // } else {
+        //     common["anchors"] = ["AutoDefault"];
     }
     if (endPoint != null) {
         common["endpoint"] = endPoint;
@@ -675,6 +702,13 @@ flowChartKit.setZoom = function (zoom, transformOrigin, el) {
     flowChartKit.doCallback(flowChartKit.CallbackTypes.onZooming, zoomPersent)
 };
 
+flowChartKit.resetZoomCenter = function()
+{
+    var newCenter = flowChartKit.getFlowZoomCenter();
+    var old = flowChartKit.zoomCenter;
+    flowChartKit.setZoomCenter(newCenter, old);
+    flowChartKit.zoomCenter = newCenter;
+}
 flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
     var instance = flowChartKit.jsPlumbIns;
     el = el || instance.getContainer();
