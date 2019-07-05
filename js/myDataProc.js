@@ -129,8 +129,10 @@ myDataProc.export = function () {
         }
     }
     if (count > 1) {
+        alert('Must only one root node. Now the root count=' + count);
         throw new Error('Must only one root node. Now the root count=' + count);
     } else if (count == 0) {
+        alert("There is not root node!");
         throw new Error("There is not root node!");
     }
 
@@ -145,9 +147,16 @@ myDataProc.exportJson = function () {
     return JSON.stringify(myDataProc.export());
 }
 
+/**
+ * 导入流程图
+ * @param {String} flowJson 流程图json数据
+ * @param {Vector} pos 流程图加载的坐标
+ * @param {bool} isAddMode true: 是追加模式，不会跳转到root节点
+ */
 myDataProc.importJson = function (flowJson, pos, isAddMode) {
     isAddMode = isAddMode || false;
     var flowInfor = JSON.parse(flowJson);
+
     if (!isAddMode) {
         //clean
         flowChartKit.clean();
@@ -160,26 +169,53 @@ myDataProc.importJson = function (flowJson, pos, isAddMode) {
         //============================================
     }
 
-    var offset = new Vector(0, 0);
-    if (pos != null) {
-        pos = flowChartKit.grid.GetNearestCellPosition(pos);
-        //计算偏移
-        var rootNode;
-        for (i in flowInfor.jp_nodes) {
-            if (flowInfor.jp_nodes[i].jp_isRoot) {
-                rootNode = flowInfor.jp_nodes[i];
-                break;
+    //============================================
+    // 取得root节点及节点id变换
+    var rootNode = null;
+    var jpIdTrans = {}; //节点id变换
+    var origPos = new Vector(0, 0); //root的坐标
+    for (i in flowInfor.jp_nodes) {
+        var node = flowInfor.jp_nodes[i];
+        if (node.jp_isRoot) {
+            if (rootNode == null) {
+                rootNode = node;
+            } else {
+                alert("Found an other root node,Must only one root node!");
+                throw new Error('Found an other root node,Must only one root node!');
             }
         }
-        if (rootNode != null) {
-            var origPos = flowChartKit.grid.GetCellPositionByIndex(rootNode.jp_pos);
-            console.log(origPos);
-            offset = Vector.sub(pos, origPos);
-        } else {
-            throw new Error('Can not find root node!');
+        if (jpIdTrans[node.jp_nid] == null) {
+            jpIdTrans[node.jp_nid] = jsPlumbUtil.uuid();
+        }
+        if (node.jp_children != null) {
+            for (i in node.jp_children) {
+                var subNode = node.jp_children[i];
+                jpIdTrans[subNode.jp_nid] = jsPlumbUtil.uuid();
+            }
         }
     }
 
+    //取得新的节点id,如果取得为null,说明参数已经是新的id了
+    var getNewNid = function (oldId) {
+        return jpIdTrans[oldId] || oldId;
+    }
+
+    //============================================
+    if (rootNode != null) {
+        origPos = flowChartKit.grid.GetCellPositionByIndex(rootNode.jp_pos);
+    } else {
+        alert("Can not find root node!");
+        throw new Error('Can not find root node!');
+    }
+
+    //============================================
+    //计算偏移
+    var offset = new Vector(0, 0);
+    if (pos != null) {
+        pos = flowChartKit.grid.GetNearestCellPosition(pos);
+        offset = Vector.sub(pos, origPos);
+    }
+    //============================================
     //new nodes
     flowChartKit.jsPlumbIns.batch(function () {
         for (i in flowInfor.jp_nodes) {
@@ -191,22 +227,28 @@ myDataProc.importJson = function (flowJson, pos, isAddMode) {
             if (nd.jp_children != null) {
                 //说明是listNode
                 cfgData.jp_children = nd.jp_children;
+                for (j in cfgData.jp_children) {
+                    var subNode = cfgData.jp_children[j];
+                    subNode.jp_nid = getNewNid(subNode.jp_nid);
+                }
                 var d = { cfg: cfgData, infor: nd.data }
-                flowChartKit.newListNode(pos.x, pos.y, d, nid)
+                flowChartKit.newListNode(pos.x, pos.y, d, getNewNid(nid));
                 delete cfgData.jp_children;
             } else {
                 var d = { cfg: cfgData, infor: nd.data }
-                flowChartKit.newNode(pos.x, pos.y, d, nid)
+                flowChartKit.newNode(pos.x, pos.y, d, getNewNid(nid));
             }
         }
 
+        //============================================
+        //连接节点
         for (i in flowInfor.jp_nodes) {
             var nd = flowInfor.jp_nodes[i];
             var sid = nd.jp_nid;
             for (j in nd.jp_connections) {
                 var tid = nd.jp_connections[j].jp_target;
                 var lb = nd.jp_connections[j].label
-                flowChartKit.connect(sid, tid, lb);
+                flowChartKit.connect(getNewNid(sid), getNewNid(tid), lb);
             }
             if (nd.jp_children != null) {
                 for (j in nd.jp_children) {
@@ -215,10 +257,15 @@ myDataProc.importJson = function (flowJson, pos, isAddMode) {
                     for (k in subNode.jp_connections) {
                         var tid = subNode.jp_connections[k].jp_target;
                         var lb = subNode.jp_connections[k].label
-                        flowChartKit.connect(sid, tid, lb);
+                        flowChartKit.connect(getNewNid(sid), getNewNid(tid), lb);
                     }
                 }
             }
+        }
+        //============================================
+        //跳转到相应该的节点
+        if (!isAddMode) {
+            flowChartKit.gotoNode(getNewNid(rootNode.jp_nid));
         }
     });
 }

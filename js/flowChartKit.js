@@ -73,7 +73,7 @@ flowChartKit.init = function (cfg, callbaksArray) {
     var container = $("#" + cfg.containerId);
 
     var jsPlumbIns = jsPlumb.getInstance({
-        Endpoint: ["Dot", { radius: 5 }],
+        Endpoint: ["Dot", { radius: 3 }],
         EndpointStyle: { fill: "#ffa500" },
         Connector: cfg.connector,
         HoverPaintStyle: { stroke: "#1e8151", strokeWidth: 2 },
@@ -290,7 +290,7 @@ flowChartKit.getFlowZoomCenter = function () {
  * 取得节点在网格中的坐标index
  */
 flowChartKit.getNodeGridPos = function (nodeId) {
-    var node = $("#" + nid);
+    var node = $("#" + nodeId);
     var zoom = flowChartKit.getZoom();
     var pos = new Vector(node.position().left, node.position().top)
     pos = Vector.mul(pos, 1 / zoom);
@@ -308,6 +308,8 @@ flowChartKit.gotoNode = function (node) {
     } else {
         nodeId = node.id;
     }
+    console.log("flowChartKit.gotoNode ===" + nodeId);
+    var cfg = flowChartKit.cfg;
     var index = flowChartKit.getNodeGridPos(nodeId);
     var pos = flowChartKit.grid.GetCellPositionByIndex(index);
     var zoom = flowChartKit.getZoom();
@@ -317,12 +319,11 @@ flowChartKit.gotoNode = function (node) {
     var h = flowChartcontainer.height() * zoom;
     var left = flowChartcontainer.offset().lfet;
     var top = flowChartcontainer.offset().top;
-    left -= pos.x;
-    top -= pos.y;
+    
+    var left = -pos.x + canvas.width() / 2 + canvas.offset().left;
+    var top = -pos.y + canvas.height() / 2 + canvas.offset().top;
     flowChartcontainer.offset({ left: left, top: top });
-    flowChartKit.zoomCenter = flowChartcontainer.getFlowZoomCenter();
     flowChartKit.resetZoomCenter()
-    //TODO:
 }
 
 /**
@@ -650,6 +651,7 @@ flowChartKit.clean = function () {
     flowChartKit.nodes = {};
     flowChartKit.jsPlumbIns.clear();
     flowChartKit.jsPlumbIns.reset(true);
+    flowChartKit.refreshGrid();
 }
 
 flowChartKit.doCallback = function (callbackType, parmas) {

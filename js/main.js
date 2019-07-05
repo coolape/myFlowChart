@@ -264,11 +264,15 @@ jsPlumb.ready(function () {
   $("#radio1").on("click", function () {
     flowChartKit.importDefaults({ Connector: flowChartKit.Connector.Flowchart });
   });
-  var json = '{"jp_name":"new flowchart","jp_gridSize":400,"jp_gridCellSize":50,"jp_nodes":[{"jp_nid":"3fd911ee-e40c-4efe-9863-ad9de370dad7","jp_cfgId":2,"jp_pos":79396,"jp_connections":["6428ec3e-2c78-40b1-ae48-4a38e291450a"]},{"jp_nid":"6428ec3e-2c78-40b1-ae48-4a38e291450a","jp_cfgId":6,"jp_children":[{"jp_nid":"jsPlumb_2_1","jp_dataIndex":0,"jp_connections":[]},{"jp_nid":"jsPlumb_2_2","jp_dataIndex":1,"jp_connections":[]},{"jp_nid":"jsPlumb_2_3","jp_dataIndex":2,"jp_connections":[]},{"jp_nid":"jsPlumb_2_4","jp_dataIndex":3,"jp_connections":[]},{"jp_nid":"jsPlumb_2_5","jp_dataIndex":4,"jp_connections":[]},{"jp_nid":"jsPlumb_2_6","jp_dataIndex":5,"jp_connections":[]},{"jp_nid":"jsPlumb_2_7","jp_dataIndex":6,"jp_connections":[]},{"jp_nid":"jsPlumb_2_8","jp_dataIndex":7,"jp_connections":[]},{"jp_nid":"jsPlumb_2_9","jp_dataIndex":8,"jp_connections":[]},{"jp_nid":"jsPlumb_2_10","jp_dataIndex":9,"jp_connections":[]},{"jp_nid":"jsPlumb_2_11","jp_dataIndex":10,"jp_connections":[]},{"jp_nid":"jsPlumb_2_12","jp_dataIndex":11,"jp_connections":[]}],"jp_pos":78198,"jp_connections":[]}]}';
+  $("#clean").on("click", function () {
+    flowChartKit.clean();
+    myDataProc.clean();
+  });
+  var json = '';
   $("#export").on("click", function () {
     json = myDataProc.exportJson();
-    console.log(json);
     alert(json);
+    console.log(json);
   });
   $("#import").on("click", function () {
     myDataProc.importJson(json);
