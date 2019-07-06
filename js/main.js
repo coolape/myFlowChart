@@ -143,7 +143,10 @@ main.specNewNode = function (x, y, nodeData) {
   });
 }
 main.addFlowchart = function (x, y, nodeCfg) {
-  myDataProc.importJson(nodeCfg.flowChart, new Vector(x, y), true);
+  var root = myDataProc.importJson(nodeCfg.flowChart, new Vector(x, y), true);
+  var list = flowChartKit.getAllLowerNodes(root);
+  flowChartKit.addToPosse(root);
+  flowChartKit.addToPosse(list);
 }
 //流程图操作的回调处理逻辑
 main.getCallbacks4Logic = function () {

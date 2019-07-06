@@ -152,6 +152,7 @@ myDataProc.exportJson = function () {
  * @param {String} flowJson 流程图json数据
  * @param {Vector} pos 流程图加载的坐标
  * @param {bool} isAddMode true: 是追加模式，不会跳转到root节点
+ * @returns {String} rootNode
  */
 myDataProc.importJson = function (flowJson, pos, isAddMode) {
     isAddMode = isAddMode || false;
@@ -268,4 +269,5 @@ myDataProc.importJson = function (flowJson, pos, isAddMode) {
             flowChartKit.gotoNode(getNewNid(rootNode.jp_nid));
         }
     });
+    return getNewNid(rootNode.jp_nid);
 }

@@ -21,9 +21,11 @@ flowChartKit.CallbackTypes = {
 }
 flowChartKit.cfg;
 flowChartKit.activeConnection = null;   // 活动的连接
+flowChartKit.activeNode = null;   // 活动的节点
 flowChartKit.jsPlumbIns = null;   // jsPlumb的实例
 flowChartKit.grid;
-flowChartKit.containerId;
+flowChartKit.canvas;
+flowChartKit.container;
 flowChartKit.callbaksArray;
 flowChartKit.zoomCenter = [0, 0];
 flowChartKit.nodes = {};
@@ -68,11 +70,12 @@ flowChartKit.init = function (cfg, callbaksArray) {
         grid.DebugDraw("#DCDCDC");
     }
     flowChartKit.grid = grid;
-    flowChartKit.containerId = cfg.containerId;
     flowChartKit.callbaksArray = callbaksArray || [];
     flowChartKit.lineColor = "#5c96bc";
 
     var container = $("#" + cfg.containerId);
+    flowChartKit.container = container;
+    flowChartKit.canvas = $("#" + cfg.canvasId);
 
     var jsPlumbIns = jsPlumb.getInstance({
         Endpoint: ["Dot", { radius: 3 }],
@@ -122,6 +125,7 @@ flowChartKit.init = function (cfg, callbaksArray) {
     jsPlumbIns.bind("click", function (c) {
         // jsPlumbIns.deleteConnection(c);
         flowChartKit.doCallback(flowChartKit.CallbackTypes.onClickConnection, c);
+        flowChartKit.setActiveNode(null);
     });
 
     // bind a connection listener. note that the parameter passed to this function contains more than
@@ -158,7 +162,7 @@ flowChartKit.init = function (cfg, callbaksArray) {
         flowChartKit.activeConnection = null;
     });
 
-    // delete group button
+    // delete node button
     jsPlumb.on(container, "click", ".del", function () {
         var node = this.parentNode.getAttribute("jpNode");
         // jsPlumbIns.removeGroup(node, this.getAttribute("delete-all") != null);
@@ -166,6 +170,8 @@ flowChartKit.init = function (cfg, callbaksArray) {
         if (node != null) {
             flowChartKit.delNode(node);
         }
+
+        flowChartKit.setActiveNode(null);
     });
 
     // bind a double click listener to "container"; add new node when this occurs.
@@ -174,13 +180,10 @@ flowChartKit.init = function (cfg, callbaksArray) {
         flowChartKit.newNode(e.offsetX, e.offsetY, {name,"New Node"});
     });
     */
-    jsPlumb.on(container, "click", function (e) {
-        flowChartKit.cleanPosse();
-    });
 
     flowChartKit.refreshGrid();
 
-    var canvas = $("#" + flowChartKit.cfg.canvasId);
+    var canvas = flowChartKit.canvas
     //处理画布拖动
     canvas.on('mousedown', function (event) {
         var old = new Vector(event.pageX, event.pageY);
@@ -221,6 +224,8 @@ flowChartKit.init = function (cfg, callbaksArray) {
         flowChartKit.setZoom(zoom, flowChartKit.zoomCenter);
         return false;
     });
+
+    canvas.on("click", flowChartKit.onClickCanvas);
 
     return jsPlumbIns;
 }
@@ -263,8 +268,6 @@ flowChartKit.refreshGrid = function (gridSize, gridCellSize) {
     var offsetLeft = -w / 2 + canvas.width() / 2 + canvas.offset().left;
     var offsetTop = -h / 2 + canvas.height() / 2 + canvas.offset().top;
     flowChartcontainer.offset({ left: offsetLeft, top: offsetTop });
-    // var old = flowChartKit.zoomCenter;
-    // flowChartKit.zoomCenter = flowChartKit.getFlowZoomCenter(canvas, flowChartcontainer, flowChartKit.getZoom());
     flowChartKit.setZoom(1);
     flowChartKit.resetZoomCenter();
 }
@@ -314,7 +317,6 @@ flowChartKit.gotoNode = function (node) {
     } else {
         nodeId = node.id;
     }
-    console.log("flowChartKit.gotoNode ===" + nodeId);
     var cfg = flowChartKit.cfg;
     var index = flowChartKit.getNodeGridPos(nodeId);
     var pos = flowChartKit.grid.GetCellPositionByIndex(index);
@@ -339,7 +341,7 @@ flowChartKit.getAllLowerNodes = function (node) {
     var list = [];
     list.push(node);    //先把root节点加入，防止循环情况可以正常跳出
     flowChartKit._getAllLowerNodes(list, node);
-    // list.shift();   //把自己去掉
+    list.shift();   //把自己去掉
     return list;
 }
 flowChartKit._getAllLowerNodes = function (list, node) {
@@ -361,7 +363,28 @@ flowChartKit.getNextLowerNodes = function (node) {
     flowChartKit.jsPlumbIns.select({ source: node }).each(function (connection) {
         list.push(connection.target.id);
     });
+    var nodeEl = document.getElementById(node)
+    if (nodeEl.getAttribute("JPListNode")) {
+        //取得listNode相连的子节点
+        var items = nodeEl.querySelectorAll("li");
+        for (i = 0; i < items.length; i++) {
+            flowChartKit.jsPlumbIns.select({ source: items[i] }).each(function (connection) {
+                list.push(connection.target.id);
+            });
+        }
+    }
+
     return list;
+}
+
+flowChartKit.setActiveNode = function (nodeId) {
+    if (flowChartKit.activeNode != null) {
+        $("#" + flowChartKit.activeNode).removeClass("select");
+    }
+    flowChartKit.activeNode = nodeId;
+    if (flowChartKit.activeNode != null) {
+        $("#" + flowChartKit.activeNode).addClass("select");
+    }
 }
 
 /**
@@ -436,29 +459,31 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
 
     node.on('mouseout', function (ev) {
         $('#' + delBtnID).hide()
+        flowChartKit.canvas.on("click", flowChartKit.onClickCanvas);
     });
 
     node.on('mousedown', function (ev) {
+        flowChartKit.canvas.off("click");//先关闭画布的click事件，不然会有冲突
         node.off('mouseover');
-        console.log("mousedown");
+
+        node.focus();
         node.on("keydown", function (e) {
             if (e.which == 16) {
                 //shift
                 var list = flowChartKit.getAllLowerNodes(id);
-                // flowChartKit.addToPosse(id);
-                for(i in list) {
-                    console.log(list[i])
-                }
+                flowChartKit.addToPosse(id);
                 flowChartKit.addToPosse(list);
+                node.off("keydown");
             }
         });
+
         node.on("keyup", function (e) {
             if (e.which == 16) {
                 //16:shift 17:Control
                 flowChartKit.cleanPosse();
+                node.off("keyup");
             }
         });
-        node.focus();
 
         node.on('mousemove', function (ev) {
             isDraging = true;
@@ -469,7 +494,6 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
     node.on('mouseup', function (ev) {
         if (isDraging) {
             // 坐标落在grid中
-            console.log("坐标落在grid中");
             var zoom = flowChartKit.getZoom();
             var pos = new Vector(node.position().left, node.position().top)
             pos = Vector.mul(pos, 1 / zoom);
@@ -485,14 +509,21 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
         node.on('mouseover', function (ev) {
             $('#' + delBtnID).show()
         });
+
         isDraging = false;
     });
     node.on("click", function (ev) {
+        flowChartKit.setActiveNode(id);
         flowChartKit.doCallback(flowChartKit.CallbackTypes.onClickNode, { node: d, data: data });
     });
 
     d = flowChartKit.initNode(d, data);
     return d;
+}
+
+flowChartKit.onClickCanvas = function (ev) {
+    flowChartKit.cleanPosse();
+    flowChartKit.setActiveNode(null);
 }
 
 /**
@@ -516,9 +547,9 @@ flowChartKit.initNode = function (el, data) {
     var sourceAnchor = data.cfg.sourceAnchor || "Continuous";
     var targetAnchor = data.cfg.targetAnchor || "Continuous";
 
+    flowChartKit.nodes[el.id] = el;
     // initialise draggable elements.
     // jsPlumbIns.draggable(el, { grid: [flowChartKit.grid.CellSize, flowChartKit.grid.CellSize] });
-    flowChartKit.nodes[el.id] = el;
     jsPlumbIns.draggable(el);
 
     if (isSource && maxOut != 0) {
@@ -678,6 +709,7 @@ flowChartKit.delNode = function (node) {
     jsPlumbIns.deleteConnectionsForElement(node)
     flowChartKit.nodes[nodeId] = null;
     delete flowChartKit.nodes[nodeId];
+    flowChartKit.removeFromPosse(nodeId);
     flowChartKit.doCallback(flowChartKit.CallbackTypes.onDeleteNode, { nodeID: nodeId });
 }
 
@@ -810,22 +842,20 @@ flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
  * 把节点加到组里
  */
 flowChartKit.addToPosse = function (nodeId) {
-    console.log("flowChartKit.addToPosse");
-    // flowChartKit.jsPlumbIns.addToPosse(nodeId, flowChartKit.posseId);
-    flowChartKit.jsPlumbIns.addToDragSelection(nodeId);
+    flowChartKit.jsPlumbIns.addToPosse(nodeId, flowChartKit.posseId);
+    // flowChartKit.jsPlumbIns.addToDragSelection(nodeId);
     var nodes = !myUtl.isString(nodeId) && (nodeId.tagName == null && nodeId.length != null) ? nodeId : [nodeId];
     for (i in nodes) {
         flowChartKit.currPosse[nodes[i]] = true;
     }
 }
 
-
 /**
  * 把节点移除出组
  */
 flowChartKit.removeFromPosse = function (nodeId) {
-    // flowChartKit.jsPlumbIns.removeFromPosse(nodeId, flowChartKit.posseId);
-    flowChartKit.jsPlumbIns.removeFromDragSelection(nodeId);
+    flowChartKit.jsPlumbIns.removeFromPosse(nodeId, flowChartKit.posseId);
+    // flowChartKit.jsPlumbIns.removeFromDragSelection(nodeId);
     var nodes = !myUtl.isString(nodeId) && (nodeId.tagName == null && nodeId.length != null) ? nodeId : [nodeId];
     for (i in nodes) {
         delete flowChartKit.currPosse[nodes[i]];
@@ -836,10 +866,10 @@ flowChartKit.removeFromPosse = function (nodeId) {
  * 清空组
  */
 flowChartKit.cleanPosse = function () {
-    // for (k in flowChartKit.currPosse) {
-    //     flowChartKit.jsPlumbIns.removeFromAllPosses(k);
-    // }
-    flowChartKit.jsPlumbIns.clearDragSelection();
+    for (k in flowChartKit.currPosse) {
+        flowChartKit.jsPlumbIns.removeFromAllPosses(k);
+    }
+    // flowChartKit.jsPlumbIns.clearDragSelection();
     flowChartKit.currPosse = {};
 }
 

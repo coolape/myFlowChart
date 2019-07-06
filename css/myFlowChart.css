@@ -178,6 +178,9 @@
     color: white;
 
 }
+.w.select {
+    border: 3px solid #099dff;
+}
 
 .aLabel.jtk-hover, .jtk-source-hover, .jtk-target-hover {
     background-color: #1e8151;
