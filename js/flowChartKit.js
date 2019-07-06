@@ -451,8 +451,6 @@ flowChartKit.newNode = function (x, y, data, assignNodeID) {
 }
 
 flowChartKit._createNode = function (x, y, data, assignNodeID) {
-    flowChartKit.cleanPosse();//清除掉批量处理
-
     var name = data.cfg.name;
     if (data.infor != null && data.infor.name != null) {
         name = data.infor.name;
@@ -524,7 +522,6 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
             for (k in flowChartKit.currPosse) {
                 flowChartKit.repostionNode(k);
             }
-            // flowChartKit.cleanPosse(true);
             flowChartKit.repostionNode(id);
         }
         node.off('mousemove');
@@ -608,6 +605,8 @@ flowChartKit.initNode = function (el, data) {
     // initialise draggable elements.
     // jsPlumbIns.draggable(el, { grid: [flowChartKit.grid.CellSize, flowChartKit.grid.CellSize] });
     jsPlumbIns.draggable(el);
+
+    flowChartKit.addToPosse(el.id);//先加到组里
 
     if (isSource && maxOut != 0) {
         jsPlumbIns.makeSource(el, {
@@ -947,6 +946,7 @@ flowChartKit.treeNodeEventDelegate = {
     [myTree.CallbackTypes.onDragStart]:
         function (node, event) {
             //drag start
+            flowChartKit.cleanPosse();//清除掉批量处理
         },
     [myTree.CallbackTypes.onDrag]:
         function (node, event) {

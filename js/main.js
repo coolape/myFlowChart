@@ -124,10 +124,11 @@ main.getTreeData = function () {
 
 //新建节点
 main.doNewNode = function (x, y, nodeData, assignNodeID) {
+  var node
   if (nodeData.JPList != null) {
-    flowChartKit.newListNode(x, y, { cfg: nodeData }, assignNodeID);
+    node = flowChartKit.newListNode(x, y, { cfg: nodeData }, assignNodeID);
   } else {
-    flowChartKit.newNode(x, y, { cfg: nodeData }, assignNodeID);
+    node = flowChartKit.newNode(x, y, { cfg: nodeData }, assignNodeID);
   }
 }
 
@@ -141,13 +142,12 @@ main.specNewNode = function (x, y, nodeData) {
       { cfg: myTree.getTreeDataById(6) });
     flowChartKit.connect(node1.id, node2.id);
   });
+
 }
 main.addFlowchart = function (x, y, nodeCfg) {
   var root = myDataProc.importJson(nodeCfg.flowChart, new Vector(x, y), true);
-  var list = flowChartKit.getAllLowerNodes(root);
-  flowChartKit.addToPosse(root);
-  flowChartKit.addToPosse(list);
 }
+
 //流程图操作的回调处理逻辑
 main.getCallbacks4Logic = function () {
   return callbacks = {
@@ -155,7 +155,6 @@ main.getCallbacks4Logic = function () {
       var node = params.node;
       var nodeData = params.data;
       var nodeId = node.id;
-      flowChartKit.addToPosse(nodeId);
       if (nodeData.JPList != null) {
         //说明是节点组
         $("#panel-fields").append("新建了节点组：" + nodeData.cfg.name + "<br>")
