@@ -454,7 +454,7 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
         });
         node.on("keyup", function (e) {
             if (e.which == 16) {
-                //shift
+                //16:shift 17:Control
                 flowChartKit.cleanPosse();
             }
         });
@@ -810,8 +810,9 @@ flowChartKit.setZoomCenter = function (transformOrigin, oldOrigin, el) {
  * 把节点加到组里
  */
 flowChartKit.addToPosse = function (nodeId) {
-    flowChartKit.jsPlumbIns.addToPosse(nodeId, flowChartKit.posseId);
-
+    console.log("flowChartKit.addToPosse");
+    // flowChartKit.jsPlumbIns.addToPosse(nodeId, flowChartKit.posseId);
+    flowChartKit.jsPlumbIns.addToDragSelection(nodeId);
     var nodes = !myUtl.isString(nodeId) && (nodeId.tagName == null && nodeId.length != null) ? nodeId : [nodeId];
     for (i in nodes) {
         flowChartKit.currPosse[nodes[i]] = true;
@@ -823,8 +824,8 @@ flowChartKit.addToPosse = function (nodeId) {
  * 把节点移除出组
  */
 flowChartKit.removeFromPosse = function (nodeId) {
-    flowChartKit.jsPlumbIns.removeFromPosse(nodeId, flowChartKit.posseId);
-
+    // flowChartKit.jsPlumbIns.removeFromPosse(nodeId, flowChartKit.posseId);
+    flowChartKit.jsPlumbIns.removeFromDragSelection(nodeId);
     var nodes = !myUtl.isString(nodeId) && (nodeId.tagName == null && nodeId.length != null) ? nodeId : [nodeId];
     for (i in nodes) {
         delete flowChartKit.currPosse[nodes[i]];
@@ -835,9 +836,10 @@ flowChartKit.removeFromPosse = function (nodeId) {
  * 清空组
  */
 flowChartKit.cleanPosse = function () {
-    for (k in flowChartKit.currPosse) {
-        flowChartKit.jsPlumbIns.removeFromAllPosses(k);
-    }
+    // for (k in flowChartKit.currPosse) {
+    //     flowChartKit.jsPlumbIns.removeFromAllPosses(k);
+    // }
+    flowChartKit.jsPlumbIns.clearDragSelection();
     flowChartKit.currPosse = {};
 }
 
