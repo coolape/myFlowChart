@@ -28,7 +28,7 @@ myDataProc[flowChartKit.CallbackTypes.onNewNode] = function (params) {
         }
     }
     myDataProc.nodes[nodeId] = newNode;
-    console.log(flowChartKit.CallbackTypes.onNewNode + "==" + nodeId);
+    // console.log(flowChartKit.CallbackTypes.onNewNode + "==" + nodeId);
 }
 
 myDataProc[flowChartKit.CallbackTypes.onClickNode] = function (params) {
@@ -39,29 +39,29 @@ myDataProc[flowChartKit.CallbackTypes.onClickNode] = function (params) {
         //说明是节点组
     }
 
-    console.log(flowChartKit.CallbackTypes.onClickNode + "==" + nodeId);
+    // console.log(flowChartKit.CallbackTypes.onClickNode + "==" + nodeId);
 }
 myDataProc[flowChartKit.CallbackTypes.onDeleteNode] = function (params) {
     var deletedId = params.nodeID;
     // myDataProc.nodes[deletedId] = null;
     delete myDataProc.nodes[deletedId];
-    console.log(flowChartKit.CallbackTypes.onDeleteNode + "==" + deletedId);
+    // console.log(flowChartKit.CallbackTypes.onDeleteNode + "==" + deletedId);
 }
 myDataProc[flowChartKit.CallbackTypes.onClickConnection] = function (connection) {
-    console.log(flowChartKit.CallbackTypes.onClickConnection + "==" + connection.id);
+    // console.log(flowChartKit.CallbackTypes.onClickConnection + "==" + connection.id);
 }
 myDataProc[flowChartKit.CallbackTypes.connection] = function (connection) {
     myDataProc.connections[connection.id] = connection;
-    console.log(flowChartKit.CallbackTypes.connection + "==" + connection.id);
+    // console.log(flowChartKit.CallbackTypes.connection + "==" + connection.id);
 }
 myDataProc[flowChartKit.CallbackTypes.connectionDetached] = function (connection) {
     myDataProc.connections[connection.id] = null;
     delete myDataProc.connections[connection.id];
-    console.log(flowChartKit.CallbackTypes.connectionDetached + "==" + connection.id);
+    // console.log(flowChartKit.CallbackTypes.connectionDetached + "==" + connection.id);
 }
 myDataProc[flowChartKit.CallbackTypes.connectionMoved] = function (connection) {
     myDataProc.connections[connection.id] = connection;
-    console.log(flowChartKit.CallbackTypes.connectionMoved + "==" + connection.id);
+    // console.log(flowChartKit.CallbackTypes.connectionMoved + "==" + connection.id);
 }
 //======================================
 myDataProc.clean = function () {

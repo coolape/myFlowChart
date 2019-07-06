@@ -76,7 +76,7 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
      * @return {null} null
      */
     grid.init = function (origin, numRows, numCols, cellSize) {
-        
+
         // var origin = new Vector(contaner.offset().left, contaner.offset().top);
         // m_origin = new Vector(0,0);// origin;
         m_origin = origin;
@@ -131,9 +131,8 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
         }
     }
 
-    grid.clean = function()
-    {
-        for(i in grid.lines) {
+    grid.clean = function () {
+        for (i in grid.lines) {
             grid.lines[i].remove();
         }
         grid.lines = [];
@@ -209,8 +208,8 @@ Grid.new = function (contanerID, origin, numRows, numCols, cellSize) {
         }
 
         pos = Vector.sub(pos, grid.Origin);
-        var col = parseInt(pos.x / m_cellSize);
-        var row = parseInt(pos.y / m_cellSize);
+        var col = parseInt(pos.x / m_cellSize + 0.1); //因为有精度问题，+0.1解决
+        var row = parseInt(pos.y / m_cellSize + 0.1); //因为有精度问题，+0.1解决
         return grid.GetCellIndex(col, row);
     }
 

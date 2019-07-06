@@ -19,6 +19,12 @@ flowChartKit.CallbackTypes = {
     connectionMoved: "connectionMoved",//当连接移开时回调
     onZooming: "onZooming",//缩放时的回调
 }
+
+flowChartKit.ModeType = {
+    normale: 1,
+    shift: 2,
+    control: 3,
+}
 flowChartKit.cfg;
 flowChartKit.activeConnection = null;   // 活动的连接
 flowChartKit.activeNode = null;   // 活动的节点
@@ -31,6 +37,7 @@ flowChartKit.zoomCenter = [0, 0];
 flowChartKit.nodes = {};
 flowChartKit.posseId = "posse01";
 flowChartKit.currPosse = {};
+flowChartKit.mode = flowChartKit.ModeType.normale;
 
 /**
  * 初始化
@@ -125,7 +132,7 @@ flowChartKit.init = function (cfg, callbaksArray) {
     jsPlumbIns.bind("click", function (c) {
         // jsPlumbIns.deleteConnection(c);
         flowChartKit.doCallback(flowChartKit.CallbackTypes.onClickConnection, c);
-        flowChartKit.setActiveNode(null);
+        flowChartKit.setCurrActiveNode(null);
     });
 
     // bind a connection listener. note that the parameter passed to this function contains more than
@@ -171,7 +178,7 @@ flowChartKit.init = function (cfg, callbaksArray) {
             flowChartKit.delNode(node);
         }
 
-        flowChartKit.setActiveNode(null);
+        flowChartKit.setCurrActiveNode(null);
     });
 
     // bind a double click listener to "container"; add new node when this occurs.
@@ -226,6 +233,24 @@ flowChartKit.init = function (cfg, callbaksArray) {
     });
 
     canvas.on("click", flowChartKit.onClickCanvas);
+
+    $(document).keydown(function (event) {
+        if (event.which == 16) {
+            //shift
+            flowChartKit.mode = flowChartKit.ModeType.shift;
+        } else if (event.which == 17 || event.which == 93) {
+            //control
+            flowChartKit.mode = flowChartKit.ModeType.control;
+        }
+    }).keyup(function (event) {
+        if (event.which == 16) {
+            //shift
+            flowChartKit.mode = flowChartKit.ModeType.normale;
+        } else if (event.which == 17 || event.which == 93) {
+            //control
+            flowChartKit.mode = flowChartKit.ModeType.normale;
+        }
+    });
 
     return jsPlumbIns;
 }
@@ -377,15 +402,28 @@ flowChartKit.getNextLowerNodes = function (node) {
     return list;
 }
 
-flowChartKit.setActiveNode = function (nodeId) {
+flowChartKit.setCurrActiveNode = function (nodeId) {
     if (flowChartKit.activeNode != null) {
-        $("#" + flowChartKit.activeNode).removeClass("select");
+        flowChartKit.setActiveNode(flowChartKit.activeNode, false);
+        flowChartKit.removeFromPosse(flowChartKit.activeNode);
     }
     flowChartKit.activeNode = nodeId;
     if (flowChartKit.activeNode != null) {
-        $("#" + flowChartKit.activeNode).addClass("select");
+        flowChartKit.setActiveNode(flowChartKit.activeNode, true);
+        flowChartKit.addToPosse(flowChartKit.activeNode);
     }
 }
+
+flowChartKit.setActiveNode = function (nodeId, isactive) {
+    isactive = isactive || false
+    if (isactive) {
+        $("#" + nodeId).addClass("select");
+    } else {
+        $("#" + nodeId).removeClass("select");
+
+    }
+}
+
 
 /**
  * 新建节点
@@ -413,6 +451,8 @@ flowChartKit.newNode = function (x, y, data, assignNodeID) {
 }
 
 flowChartKit._createNode = function (x, y, data, assignNodeID) {
+    flowChartKit.cleanPosse();//清除掉批量处理
+
     var name = data.cfg.name;
     if (data.infor != null && data.infor.name != null) {
         name = data.infor.name;
@@ -449,43 +489,31 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
     var pos = new Vector(left, top)
     // pos = flowChartKit.grid.GetNearestCellCenter(pos)
     pos = flowChartKit.grid.GetNearestCellPosition(pos);
-    d.style.left = pos.x + "px";
-    d.style.top = pos.y + "px";
+    node.css({ "left": pos.x, "top": pos.y });//设置相对位置
 
     var isDraging = false;
+    node.on('mouseenter', function (ev) {
+        $('#' + delBtnID).show()
+        flowChartKit.canvas.off("click");
+    });
     node.on('mouseover', function (ev) {
         $('#' + delBtnID).show()
     });
 
     node.on('mouseout', function (ev) {
         $('#' + delBtnID).hide()
-        flowChartKit.canvas.on("click", flowChartKit.onClickCanvas);
+        if (flowChartKit.canvas.onclick == null) {
+            flowChartKit.canvas.on("click", flowChartKit.onClickCanvas);
+        }
     });
 
     node.on('mousedown', function (ev) {
         flowChartKit.canvas.off("click");//先关闭画布的click事件，不然会有冲突
         node.off('mouseover');
 
-        node.focus();
-        node.on("keydown", function (e) {
-            if (e.which == 16) {
-                //shift
-                var list = flowChartKit.getAllLowerNodes(id);
-                flowChartKit.addToPosse(id);
-                flowChartKit.addToPosse(list);
-                node.off("keydown");
-            }
-        });
-
-        node.on("keyup", function (e) {
-            if (e.which == 16) {
-                //16:shift 17:Control
-                flowChartKit.cleanPosse();
-                node.off("keyup");
-            }
-        });
-
         node.on('mousemove', function (ev) {
+            if (!isDraging) {
+            }
             isDraging = true;
             $('#' + delBtnID).hide()
         });
@@ -493,18 +521,12 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
 
     node.on('mouseup', function (ev) {
         if (isDraging) {
-            // 坐标落在grid中
-            var zoom = flowChartKit.getZoom();
-            var pos = new Vector(node.position().left, node.position().top)
-            pos = Vector.mul(pos, 1 / zoom);
-            // pos = flowChartKit.grid.GetNearestCellCenter(pos);
-            pos = flowChartKit.grid.GetNearestCellPosition(pos);
-            d.style.left = pos.x + "px";
-            d.style.top = pos.y + "px";
-            flowChartKit.jsPlumbIns.revalidate(id); //通知jsPlumb某个元素有变化
+            for (k in flowChartKit.currPosse) {
+                flowChartKit.repostionNode(k);
+            }
+            // flowChartKit.cleanPosse(true);
+            flowChartKit.repostionNode(id);
         }
-        node.off("keydown");
-        flowChartKit.cleanPosse();
         node.off('mousemove');
         node.on('mouseover', function (ev) {
             $('#' + delBtnID).show()
@@ -513,7 +535,22 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
         isDraging = false;
     });
     node.on("click", function (ev) {
-        flowChartKit.setActiveNode(id);
+        if (flowChartKit.mode == flowChartKit.ModeType.shift) {
+            flowChartKit.cleanPosse();
+            var list = flowChartKit.getAllLowerNodes(id);
+            flowChartKit.addToPosse(id);
+            flowChartKit.addToPosse(list);
+        } else if (flowChartKit.mode == flowChartKit.ModeType.control) {
+            if (flowChartKit.currPosse[id]) {
+                flowChartKit.removeFromPosse(id);
+            } else {
+                flowChartKit.addToPosse(id);
+            }
+        } else {
+            if (!flowChartKit.currPosse[id]) {
+                flowChartKit.setCurrActiveNode(id);
+            }
+        }
         flowChartKit.doCallback(flowChartKit.CallbackTypes.onClickNode, { node: d, data: data });
     });
 
@@ -521,9 +558,29 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
     return d;
 }
 
+/**
+ * 重新设置节点的位置
+ */
+flowChartKit.repostionNode = function (nodeid) {
+    var node = $("#" + nodeid);
+    // 坐标落在grid中
+    var zoom = flowChartKit.getZoom();
+    var pos = new Vector(node.position().left, node.position().top)
+    pos = Vector.mul(pos, 1 / zoom);
+    // pos = flowChartKit.grid.GetNearestCellCenter(pos);
+    pos = flowChartKit.grid.GetNearestCellPosition(pos);
+    // d.style.left = pos.x + "px";
+    // d.style.top = pos.y + "px";
+    node.css({ "left": pos.x, "top": pos.y });
+    flowChartKit.jsPlumbIns.revalidate(nodeid); //通知jsPlumb某个元素有变化
+}
+
+/**
+ * 画布的点击处理
+ */
 flowChartKit.onClickCanvas = function (ev) {
     flowChartKit.cleanPosse();
-    flowChartKit.setActiveNode(null);
+    flowChartKit.setCurrActiveNode(null);
 }
 
 /**
@@ -749,6 +806,7 @@ flowChartKit.clean = function () {
     flowChartKit.jsPlumbIns.clear();
     flowChartKit.jsPlumbIns.reset(true);
     flowChartKit.refreshGrid();
+    flowChartKit.mode = flowChartKit.ModeType.normale;
 }
 
 flowChartKit.doCallback = function (callbackType, parmas) {
@@ -846,6 +904,7 @@ flowChartKit.addToPosse = function (nodeId) {
     // flowChartKit.jsPlumbIns.addToDragSelection(nodeId);
     var nodes = !myUtl.isString(nodeId) && (nodeId.tagName == null && nodeId.length != null) ? nodeId : [nodeId];
     for (i in nodes) {
+        flowChartKit.setActiveNode(nodes[i], true);
         flowChartKit.currPosse[nodes[i]] = true;
     }
 }
@@ -858,6 +917,7 @@ flowChartKit.removeFromPosse = function (nodeId) {
     // flowChartKit.jsPlumbIns.removeFromDragSelection(nodeId);
     var nodes = !myUtl.isString(nodeId) && (nodeId.tagName == null && nodeId.length != null) ? nodeId : [nodeId];
     for (i in nodes) {
+        flowChartKit.setActiveNode(nodes[i], false);
         delete flowChartKit.currPosse[nodes[i]];
     }
 }
@@ -865,8 +925,13 @@ flowChartKit.removeFromPosse = function (nodeId) {
 /**
  * 清空组
  */
-flowChartKit.cleanPosse = function () {
+flowChartKit.cleanPosse = function (isReposition) {
+    isReposition = isReposition || false;
     for (k in flowChartKit.currPosse) {
+        if (isReposition) {
+            flowChartKit.repostionNode(k);
+        }
+        flowChartKit.setActiveNode(k, false);
         flowChartKit.jsPlumbIns.removeFromAllPosses(k);
     }
     // flowChartKit.jsPlumbIns.clearDragSelection();

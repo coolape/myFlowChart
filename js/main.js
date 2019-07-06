@@ -155,6 +155,7 @@ main.getCallbacks4Logic = function () {
       var node = params.node;
       var nodeData = params.data;
       var nodeId = node.id;
+      flowChartKit.addToPosse(nodeId);
       if (nodeData.JPList != null) {
         //说明是节点组
         $("#panel-fields").append("新建了节点组：" + nodeData.cfg.name + "<br>")
@@ -280,5 +281,4 @@ jsPlumb.ready(function () {
   $("#import").on("click", function () {
     myDataProc.importJson(json);
   });
-
 });
