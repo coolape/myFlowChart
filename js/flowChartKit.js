@@ -108,6 +108,7 @@ flowChartKit.init = function (cfg, callbaksArray) {
                 cssClass: "dLabel",
                 events: {
                     click: function (labelOverlay, originalEvent) {
+                        originalEvent.stopPropagation(); //阻止父节点事件
                         // 删除连接
                         if (flowChartKit.activeConnection != null) {
                             flowChartKit.delConnection(flowChartKit.activeConnection);
@@ -170,16 +171,16 @@ flowChartKit.init = function (cfg, callbaksArray) {
     });
 
     // delete node button
-    jsPlumb.on(container, "click", ".del", function () {
-        var node = this.parentNode.getAttribute("jpNode");
-        // jsPlumbIns.removeGroup(node, this.getAttribute("delete-all") != null);
-        // jsPlumbIns.deleteConnectionsForElement(node)
-        if (node != null) {
-            flowChartKit.delNode(node);
-        }
+    // jsPlumb.on(container, "click", ".del", function (event) {
+    //     console.log("click del");
+    //     event.stopPropagation();
+    //     var node = this.parentNode.getAttribute("jpNode");
+    //     if (node != null) {
+    //         flowChartKit.delNode(node);
+    //     }
 
-        flowChartKit.setCurrActiveNode(null);
-    });
+    //     flowChartKit.setCurrActiveNode(null);
+    // });
 
     // bind a double click listener to "container"; add new node when this occurs.
     /*
@@ -195,6 +196,7 @@ flowChartKit.init = function (cfg, callbaksArray) {
     canvas.on('mousedown', function (event) {
         var old = new Vector(event.pageX, event.pageY);
         canvas.on('mousemove', function (ev) {
+            flowChartKit.activeConnection = null; //把激活的连接设为null,就不会出现拖动时误删连接的情况
             var now = new Vector(ev.pageX, ev.pageY);
             var diff = Vector.sub(now, old);
             var pos = new Vector(container.offset().left, container.offset().top);
@@ -205,6 +207,12 @@ flowChartKit.init = function (cfg, callbaksArray) {
     });
 
     canvas.on('mouseup', function (event) {
+        //要先关mousemove
+        canvas.off('mousemove');
+        //重置流程图panel的中心点
+        flowChartKit.resetZoomCenter();
+    });
+    canvas.mouseout(function (ev) {
         //要先关mousemove
         canvas.off('mousemove');
         //重置流程图panel的中心点
@@ -232,8 +240,12 @@ flowChartKit.init = function (cfg, callbaksArray) {
         return false;
     });
 
-    canvas.on("click", flowChartKit.onClickCanvas);
+    canvas.on("click", function (ev) {
+        flowChartKit.cleanPosse();
+        flowChartKit.setCurrActiveNode(null);
+    });
 
+    //按键处理
     $(document).keydown(function (event) {
         if (event.which == 16) {
             //shift
@@ -480,7 +492,8 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
     jsPlumbIns.getContainer().appendChild(d);
 
     var zoom = flowChartKit.getZoom();
-    var node = $('#' + id)
+    var node = $('#' + id);
+    var delButton = $('#' + delBtnID);
     var left = x - (node.width() * zoom / 2);
     var top = y - (node.height() * zoom / 2);
     // 坐标落在gird中
@@ -491,29 +504,23 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
 
     var isDraging = false;
     node.on('mouseenter', function (ev) {
-        $('#' + delBtnID).show()
-        flowChartKit.canvas.off("click");
+        delButton.show()
     });
     node.on('mouseover', function (ev) {
-        $('#' + delBtnID).show()
+        delButton.show()
     });
 
     node.on('mouseout', function (ev) {
-        $('#' + delBtnID).hide()
-        if (flowChartKit.canvas.onclick == null) {
-            flowChartKit.canvas.on("click", flowChartKit.onClickCanvas);
-        }
+        delButton.hide()
     });
 
     node.on('mousedown', function (ev) {
-        flowChartKit.canvas.off("click");//先关闭画布的click事件，不然会有冲突
         node.off('mouseover');
-
         node.on('mousemove', function (ev) {
             if (!isDraging) {
             }
             isDraging = true;
-            $('#' + delBtnID).hide()
+            delButton.hide()
         });
     });
 
@@ -526,12 +533,13 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
         }
         node.off('mousemove');
         node.on('mouseover', function (ev) {
-            $('#' + delBtnID).show()
+            delButton.show()
         });
 
         isDraging = false;
     });
     node.on("click", function (ev) {
+        ev.stopPropagation(); //阻止事件发到画布上
         if (flowChartKit.mode == flowChartKit.ModeType.shift) {
             flowChartKit.cleanPosse();
             var list = flowChartKit.getAllLowerNodes(id);
@@ -549,6 +557,16 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
             }
         }
         flowChartKit.doCallback(flowChartKit.CallbackTypes.onClickNode, { node: d, data: data });
+    });
+
+    //删除节点事件
+    delButton.on("click", function (event) {
+        event.stopPropagation();//阻止事件触发到节点上
+        var node = this.parentNode.getAttribute("jpNode");
+        if (node != null) {
+            flowChartKit.delNode(node);
+        }
+        flowChartKit.setCurrActiveNode(null);
     });
 
     d = flowChartKit.initNode(d, data);
@@ -570,14 +588,6 @@ flowChartKit.repostionNode = function (nodeid) {
     // d.style.top = pos.y + "px";
     node.css({ "left": pos.x, "top": pos.y });
     flowChartKit.jsPlumbIns.revalidate(nodeid); //通知jsPlumb某个元素有变化
-}
-
-/**
- * 画布的点击处理
- */
-flowChartKit.onClickCanvas = function (ev) {
-    flowChartKit.cleanPosse();
-    flowChartKit.setCurrActiveNode(null);
 }
 
 /**
@@ -760,12 +770,10 @@ flowChartKit.delNode = function (node) {
         nodeId = node.id;
     }
     var jsPlumbIns = flowChartKit.jsPlumbIns
-    // jsPlumbIns.removeGroup(node, true);
-    jsPlumbIns.remove(node)
-    jsPlumbIns.deleteConnectionsForElement(node)
-    flowChartKit.nodes[nodeId] = null;
     delete flowChartKit.nodes[nodeId];
     flowChartKit.removeFromPosse(nodeId);
+    jsPlumbIns.deleteConnectionsForElement(node)
+    jsPlumbIns.remove(node)
     flowChartKit.doCallback(flowChartKit.CallbackTypes.onDeleteNode, { nodeID: nodeId });
 }
 
