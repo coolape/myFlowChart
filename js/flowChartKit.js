@@ -559,6 +559,12 @@ flowChartKit._createNode = function (x, y, data, assignNodeID) {
         flowChartKit.doCallback(flowChartKit.CallbackTypes.onClickNode, { node: d, data: data });
     });
 
+    node.on("dblclick", function (ev) {
+        ev.stopPropagation(); //阻止事件发到画布上
+        flowChartKit.cleanPosse();
+        flowChartKit.setCurrActiveNode(id);
+    });
+
     //删除节点事件
     delButton.on("click", function (event) {
         event.stopPropagation();//阻止事件触发到节点上
